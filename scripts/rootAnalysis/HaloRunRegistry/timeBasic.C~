@@ -1,0 +1,530 @@
+// ------------------------------------------------------------------------------
+// files
+// ------------------------------------------------------------------------------
+TFile* rootFile;
+
+// ------------------------------------------------------------------------------
+// TTree
+// ------------------------------------------------------------------------------
+TTree* Ntuple;
+
+// ------------------------------------------------------------------------------
+// histograms
+// ------------------------------------------------------------------------------
+TH1F* hDeltaEta;
+TH1F* hDeltaPhi;
+TH1F* hChargeValid;
+
+// ------------------------------------------------------------------------------
+// scatter plots
+// ------------------------------------------------------------------------------
+TH2F* hPt;
+TH2F* hQoverP;
+
+TH2F* hChrgRawVsChrgReco;
+
+// ------------------------------------------------------------------------------
+// variables
+// ------------------------------------------------------------------------------
+TString titleCanv("");
+double Pi  = TMath::Pi();
+double d25 = Pi*2.5/180; //tmp patch: to remove with new code
+
+// ------------------------------------------------------------------------------
+// switches
+// ------------------------------------------------------------------------------
+// default values
+//
+// TString runNumber  = "chain";    chain of runs, single run
+// int     printLevel =      0 ;    0 = nothing, 1=minimal, 10 = all
+// bool    isSave     =      0 ;    0 = do not save plots;  !0 = save plots 
+// double  phiMax     =   2*Pi ;    
+// double  phiMin     =      0 ;    
+
+void ptLUT(TString runNumber  = "chain",
+	   int     printLevel =      0 ,
+	   bool    isSave     =      0 ,
+	   double  phiMin     =      0 ,
+	   double  phiMax     =   2*Pi ) {
+
+
+  if (runNumber.IsNull()) {
+
+    cout << "TString runNumber is NULL: which run(s) do you want to run over?\n";
+    cout << "ERROR: exiting...\n";
+    return;
+  }
+
+  
+  gROOT->Clear();
+  gInterpreter->LoadMacro("/afs/cern.ch/user/d/digiovan/scripts/Init/"
+			  "modifiedStyle.C");
+
+
+  if (runNumber.Contains("chain")) {
+
+    //--------------------------------------------------------------------------
+    // Construct the chain of input files
+    //--------------------------------------------------------------------------
+    gInterpreter->LoadMacro("./scripts/cosmicsChain.C");
+  
+    TChain* Chain  = cosmicsChain();
+    cout << "cosmicsChain has " << Chain->GetEntries() << " entries\n";
+  
+    Ntuple = (TTree*) Chain -> CloneTree();
+  }
+  else {
+
+    // rootFile
+    TString fileName("root/CRAFT_V3P_SuperPointing_v4/CosmicsData-run"+
+		     runNumber+".root");
+    
+    rootFile = TFile::Open(fileName.Data());
+  
+    cout << "Opening root file: " 
+	 <<  rootFile->GetName() << " >> " <<  rootFile << endl;
+  
+    // get the Nutple
+    Ntuple  = (TTree*) rootFile->Get("Ntuple");
+  }
+  
+  if (printLevel == 10) {
+    cout << "Ntuple->GetEntries(): " << Ntuple->GetEntries() << endl;
+    Ntuple -> Print();
+  }
+  
+  cout << phiMin << " =< rchPhi < " << phiMax << endl;
+  TString phiCut("");
+  if (phiMin ==0  && phiMax == Pi  ) phiCut += "phiTop"; 
+  if (phiMin ==Pi && phiMax == 2*Pi) phiCut += "phiBottom"; 
+  
+  //----------------------------------------------------------------------------
+  // Access the needed variables
+  //----------------------------------------------------------------------------
+  int    run, event;
+
+  vector<int>*    IsChrgRaw;
+  vector<int>*    chrgRaw;
+  vector<int>*    modeRaw;
+  vector<int>*    qualityRaw;
+  vector<float>*  ptRaw;
+  vector<float>*  etaRaw;
+  vector<float>*  phiRaw;
+  vector<float>*  phiRaw_02PI;
+  vector<int>*    phiRawBit;
+  vector<int>*    endcapRaw;
+  vector<int>*    sectorRaw;
+
+  vector<float>*  ptReco;
+  vector<float>*  etaReco;
+  vector<float>*  phiReco;
+  vector<float>*  chrgReco;
+
+  vector<float>*  rchEta;
+  vector<float>*  rchPhi;
+
+
+  TBranch*  runB        = Ntuple -> GetBranch("run"           );
+  TBranch*  eventB      = Ntuple -> GetBranch("event"         );
+  							   
+  TBranch*  IsChrgRawB  = Ntuple -> GetBranch("ChargeValidTrk");
+  TBranch*  chrgRawB    = Ntuple -> GetBranch("ChargeTrk"     );
+  TBranch*  modeRawB    = Ntuple -> GetBranch("ModeTrk"       );
+  TBranch*  qualityRawB = Ntuple -> GetBranch("QualityTrk"    );
+  TBranch*  ptRawB      = Ntuple -> GetBranch("PtTrk"         );
+  TBranch*  etaRawB     = Ntuple -> GetBranch("EtaTrk"        );
+  TBranch*  phiRawB     = Ntuple -> GetBranch("PhiTrk"        );
+  TBranch*  phiRaw_02PIB= Ntuple -> GetBranch("PhiTrk_02PI"   );
+  TBranch*  phiRawBitB  = Ntuple -> GetBranch("PhiBit"        );
+  TBranch*  endcapRawB  = Ntuple -> GetBranch("EndcapTrk"     );
+  TBranch*  sectorRawB  = Ntuple -> GetBranch("SectorTrk"     );
+							   
+  TBranch*  ptRecoB     = Ntuple -> GetBranch("gmrPt"         );
+  TBranch*  etaRecoB    = Ntuple -> GetBranch("gmrEta"        );
+  TBranch*  phiRecoB    = Ntuple -> GetBranch("gmrPhi"        );
+  TBranch*  chrgRecoB   = Ntuple -> GetBranch("gmrCharge"     );
+							       
+  TBranch*  rchEtaB     = Ntuple -> GetBranch("rchEta"        );
+  TBranch*  rchPhiB     = Ntuple -> GetBranch("rchPhi_02PI"   );
+
+
+  runB        -> SetAddress(&run        );
+  eventB      -> SetAddress(&event      );
+
+  IsChrgRawB  -> SetAddress(&IsChrgRaw  );
+  chrgRawB    -> SetAddress(&chrgRaw    );
+  modeRawB    -> SetAddress(&modeRaw    );
+  qualityRawB -> SetAddress(&qualityRaw );
+  ptRawB      -> SetAddress(&ptRaw      );
+  etaRawB     -> SetAddress(&etaRaw     );
+  phiRawB     -> SetAddress(&phiRaw     );
+  phiRaw_02PIB-> SetAddress(&phiRaw_02PI);
+  phiRawBitB  -> SetAddress(&phiRawBit  );
+  endcapRawB  -> SetAddress(&endcapRaw  );
+  sectorRawB  -> SetAddress(&sectorRaw  );
+              		               
+  ptRecoB     -> SetAddress(&ptReco     );
+  etaRecoB    -> SetAddress(&etaReco    );
+  phiRecoB    -> SetAddress(&phiReco    );
+  chrgRecoB   -> SetAddress(&chrgReco   );
+
+  rchEtaB    -> SetAddress(&rchEta      );
+  rchPhiB    -> SetAddress(&rchPhi      );
+
+
+  // --------------------------------------------------------------------------- 
+  // Histograms
+  // ---------------------------------------------------------------------------  
+  hDeltaEta    = new TH1F("hDeltaEta",    "", 100,    -5,    5);
+  hDeltaPhi    = new TH1F("hDeltaPhi",    "", 100, -2*Pi, 2*Pi);
+  hChargeValid = new TH1F("hChargeValid", "", 10,     -1,    2);
+
+  hPt                = new TH2F("hPt"    , "", 140,  0., 140.,  50,  0, 100);
+  hQoverP            = new TH2F("hQoverP", "", 280, -1.,   1., 100, -1,   1);
+  hChrgRawVsChrgReco = new TH2F("hChrgRawVsChrgReco", 
+				           "", 10,  -2,   2.,  10, -2,   2);
+  // --------------------------------------------------------------------------- 
+  // Loop over the events
+  // ---------------------------------------------------------------------------  
+  for (int iEvt=0; iEvt < Ntuple->GetEntries(); iEvt++) {
+   
+    Ntuple->GetEntry(iEvt);
+
+
+    for (int iReco=0; iReco < ptReco->size(); iReco++) { 
+
+      // ----------------------------------------------------------------------
+      // Analyze the evt if CSC raw info available
+      // ----------------------------------------------------------------------
+      if ( rchEta->at(iReco) != -999 ) { 
+
+	if (printLevel > 0) {
+	  printf("\n----------------------------------------"
+		 "----------------------------------------\n");
+
+	  printf("\n *** Run %d Evt %d \n", run, event);
+
+	  printf(" - PtReco: %8.4f EtaReco: %8.4f PhiReco: %8.4f \n",
+		 ptReco->at(iReco), etaReco->at(iReco), phiReco->at(iReco));
+
+	  printf("                    EtaRCH : %8.4f PhiRCH : %8.4f\n",
+		 rchEta->at(iReco), rchPhi->at(iReco));
+	}
+
+	
+	for (int iRaw=0; iRaw < ptRaw->size(); iRaw++) { 
+      
+	  float EtaRaw = etaRaw->at(iRaw) * endcapRaw->at(iRaw);
+
+	  int    sector  = sectorRaw->at(iRaw) % 6;
+	  if (sector == 0) sector +=6;
+	   double Phi02PI   = fmod((phiRawBit->at(iRaw)*d25) + 
+				           ((sector-1)*Pi/3) + 
+				                     (Pi/12) , 2*Pi);
+
+	   if (printLevel > 0)
+      	    printf(" # PtRaw : %8.4f EtaRaw : %8.4f "
+		   " PhiRaw : %8.4f PhiRaw_25 : %8.4f\n",
+		   ptRaw      ->at(iRaw), EtaRaw, 
+		   phiRaw_02PI->at(iRaw), Phi02PI);
+	  
+	  double deltaEta = rchEta->at(iReco) - EtaRaw;
+	  double deltaPhi = rchPhi->at(iReco) - Phi02PI;
+	  //double deltaPhi = rchPhi->at(iReco) - phiRaw_02PI->at(iRaw);
+	  //double deltaPhi_19 = rchPhi->at(iReco) - Phi02PI_19;
+
+	  if((modeRaw->at(iRaw) <  11)) {
+	    hDeltaEta -> Fill(deltaEta);    
+	    hDeltaPhi -> Fill(deltaPhi);    
+	  //hDeltaPhi -> Fill(deltaPhi_19);    
+	  }
+	  
+	  if( (fabs(deltaEta)    < 0.5) &&
+	      (fabs(deltaPhi   ) < 0.5) && //) {
+	      (modeRaw->at(iRaw) <  11)  ) {
+
+	    //cout << "IsChrgRaw->at(iRaw): "   << IsChrgRaw->at(iRaw)  ;
+	    //cout << " chrgRaw  ->at(iRaw): "  << chrgRaw  ->at(iRaw)  ;
+	    //cout << " chrgReco ->at(iReco): " << chrgReco ->at(iReco) << endl;
+	    if(Phi02PI >= phiMin &&
+	       Phi02PI <  phiMax  ) {
+
+	      hChargeValid       -> Fill(IsChrgRaw->at(iRaw) );
+	      hChrgRawVsChrgReco -> Fill(chrgRaw  ->at(iRaw)  ,
+					 chrgReco ->at(iReco));
+	      
+	      hPt -> Fill (ptRaw->at(iRaw), ptReco->at(iReco));
+	    
+	      if (//IsChrgRaw->at(iRaw) &&
+		  ptRaw->at(iRaw) > 0 &&
+		  ptReco->at(iReco) > 0) 
+
+		hQoverP -> Fill (//(chrgRaw->at(iRaw)/ptRaw->at(iRaw)), 
+				 (chrgReco->at(iReco)/ptRaw->at(iRaw)), 
+				 (chrgReco->at(iReco)/ptReco->at(iReco)) );
+	    }
+	  }
+	}
+
+      } //if (fabs(etaReco) > 0.9)      
+    }//for (int iReco=0; iReco < ptReco->size(); iReco++) { 
+
+    
+  }// end Loop evts
+  if (printLevel > 0)
+    printf("\n----------------------------------------"
+	   "----------------------------------------\n");
+    
+  // --------------------------------------------------------------------------- 
+  // Delta Eta
+  // ---------------------------------------------------------------------------  
+  SetStyleh1(hDeltaEta   , 622, 1001, 1, "#phi");
+  TCanvas* DeltaEta 
+    = new TCanvas("DeltaEta", "Delta eta",   0, 0, 400, 400);
+  
+  hDeltaEta -> Draw();
+  
+  PrintIt(DeltaEta, "#Delta #eta = #eta_{RecHit} - #eta_{Raw}");
+
+ 
+  // --------------------------------------------------------------------------- 
+  // Delta Phi
+  // ---------------------------------------------------------------------------  
+  SetStyleh1(hDeltaPhi   , 622, 1001, 1, "#phi");
+  TCanvas* DeltaPhi 
+    = new TCanvas("DeltaPhi", "Delta phi", 420, 0, 400, 400);
+  
+  hDeltaPhi -> Draw();
+  PrintIt(DeltaPhi, "#Delta #phi = #phi_{RecHit} - #phi_{Raw}");
+
+
+  // --------------------------------------------------------------------------- 
+  // Pt
+  // ---------------------------------------------------------------------------  
+  SetStyleh2(hPt, 1, 0.1, "P_{T}^{raw} [Gev]", "P_{T}^{reco} [Gev]");
+  TCanvas* Pt 
+    = new TCanvas("Pt", "Pt", 840, 0, 400, 400);
+  
+  hPt -> Draw("COLZ");
+  SetMargin(Pt);
+
+  titleCanv = "P_{T}^{raw} vs P_{T}^{reco}";
+  if (phiMin ==0  && phiMax == Pi  ) titleCanv += (" (Top Sectors)"   );
+  if (phiMin ==Pi && phiMax == 2*Pi) titleCanv += (" (Bottom Sectors)");
+  
+  PrintIt(Pt, titleCanv.Data());
+
+  if (isSave) {
+    Pt->SaveAs("eps/"+runNumber+"/PtRawVsPtReco-"+runNumber+"-"+phiCut+".eps");
+    Pt->SaveAs("png/"+runNumber+"/PtRawVsPtReco-"+runNumber+"-"+phiCut+".png");
+  }
+
+
+  // --------------------------------------------------------------------------- 
+  // Pt Profile X
+  // --------------------------------------------------------------------------- 
+  hPt -> ProfileX();
+  
+  TCanvas* Pt_pfx 
+    = new TCanvas("Pt_pfx", "Pt ProfileX", 1260, 0, 400, 400);
+  
+  // Additional makeup...
+  hPt_pfx -> SetMarkerSize (0.8);
+  hPt_pfx -> SetMarkerColor(629);
+  hPt_pfx -> SetLineWidth  (1);
+  
+  hPt_pfx -> GetYaxis()    -> SetTitle("P_{T}^{reco} [Gev]");
+  hPt_pfx -> GetYaxis()    -> SetTitleOffset(1);
+
+  hPt_pfx -> Draw("");
+
+  titleCanv = "Profile in P_{T}^{raw}";
+  if (phiMin ==0  && phiMax == Pi  ) titleCanv += (" (Top Sectors)"   );
+  if (phiMin ==Pi && phiMax == 2*Pi) titleCanv += (" (Bottom Sectors)");
+
+  PrintIt(Pt_pfx, titleCanv.Data());
+
+  if (isSave) {
+    Pt_pfx->SaveAs("eps/"+runNumber+"/PtRawVsPtReco_pfx-"
+		   +runNumber+"-"+phiCut+".eps");
+    Pt_pfx->SaveAs("png/"+runNumber+"/PtRawVsPtReco_pfx-"
+		   +runNumber+"-"+phiCut+".png");
+  }
+
+
+  // --------------------------------------------------------------------------- 
+  // Pt Profile Y
+  // --------------------------------------------------------------------------- 
+  hPt -> ProfileY();
+  
+  TCanvas* Pt_pfy 
+    = new TCanvas("Pt_pfy", "Pt ProfileY", 0, 500, 400, 400);
+  
+  // Additional makeup...
+  hPt_pfy -> SetMarkerSize (0.8);
+  hPt_pfy -> SetMarkerColor(629);
+  hPt_pfy -> SetLineWidth  (1);
+  hPt_pfy -> GetXaxis() -> SetTitleOffset(1);
+
+  hPt_pfy -> GetYaxis()    -> SetTitle("P_{T}^{raw} [Gev]");
+  hPt_pfy -> GetYaxis()    -> SetTitleOffset(1);
+  
+  hPt_pfy -> Draw("");
+
+  titleCanv = "Profile in P_{T}^{reco'd}";
+  if (phiMin ==0  && phiMax == Pi  ) titleCanv += (" (Top Sectors)"   );
+  if (phiMin ==Pi && phiMax == 2*Pi) titleCanv += (" (Bottom Sectors)");
+
+  PrintIt(Pt_pfy, titleCanv.Data());
+
+  if (isSave) {
+    Pt_pfy->SaveAs("eps/"+runNumber+"/PtRawVsPtReco_pfy-"
+		   +runNumber+"-"+phiCut+".eps");
+    Pt_pfy->SaveAs("png/"+runNumber+"/PtRawVsPtReco_pfy-"
+		   +runNumber+"-"+phiCut+".png");
+  }
+  
+  
+  // --------------------------------------------------------------------------- 
+  // Q/P
+  // ---------------------------------------------------------------------------  
+  SetStyleh2(hQoverP, 1, 0.1, "q/P_{T}^{raw} [1/Gev]", 
+	                      "q/P_{T}^{reco} [1/Gev]");
+  TCanvas* QoverP 
+    = new TCanvas("QoverP", "QoverP", 420, 500, 400, 400);
+  
+  hQoverP -> Draw("COLZ");
+  SetMargin(QoverP);
+
+  titleCanv = "q/P_{T}^{raw} vs q/P_{T}^{reco}";
+  if (phiMin ==0  && phiMax == Pi  ) titleCanv += (" (Top Sectors)"   );
+  if (phiMin ==Pi && phiMax == 2*Pi) titleCanv += (" (Bottom Sectors)");
+
+  PrintIt(QoverP, titleCanv.Data());
+
+  if (isSave) {
+    QoverP->SaveAs("eps/"+runNumber+"/qPtRawVsqPtReco-"
+		   +runNumber+"-"+phiCut+".eps");
+    QoverP->SaveAs("png/"+runNumber+"/qPtRawVsqPtReco-"
+		   +runNumber+"-"+phiCut+".png");
+  }
+
+
+  // --------------------------------------------------------------------------- 
+  // Q/P Profile X
+  // --------------------------------------------------------------------------- 
+  hQoverP -> ProfileX();
+  
+  TCanvas* QoverP_pfx 
+    = new TCanvas("QoverP_pfx", "q/P_{T} ProfileX", 840, 500, 400, 400);
+  
+  // Additional makeup...
+  hQoverP_pfx -> SetMarkerSize (0.8);
+  hQoverP_pfx -> SetMarkerColor(629);
+  hQoverP_pfx -> SetLineWidth  (1);
+
+  hQoverP_pfx -> GetYaxis()    -> SetTitle("q/P_{T}^{reco} [1/Gev]");
+  hQoverP_pfx -> GetYaxis()    -> SetTitleOffset(1);
+
+  hQoverP_pfx -> Draw("");
+
+  titleCanv = "Profile in q/P_{T}^{raw}";
+  if (phiMin ==0  && phiMax == Pi  ) titleCanv += (" (Top Sectors)"   );
+  if (phiMin ==Pi && phiMax == 2*Pi) titleCanv += (" (Bottom Sectors)");
+
+  PrintIt(QoverP_pfx, titleCanv.Data());
+
+  if (isSave) {
+    QoverP_pfx->SaveAs("eps/"+runNumber+"/qPtRawVsqPtReco_pfx-"
+		       +runNumber+"-"+phiCut+".eps");
+    QoverP_pfx->SaveAs("png/"+runNumber+"/qPtRawVsqPtReco_pfx-"
+		       +runNumber+"-"+phiCut+".png");
+  }
+
+
+  // --------------------------------------------------------------------------- 
+  // Q/P Profile Y
+  // --------------------------------------------------------------------------- 
+  hQoverP -> ProfileY();
+  
+  TCanvas* QoverP_pfy 
+    = new TCanvas("QoverP_pfy", "q/P_{T} ProfileY", 1260, 500, 400, 400);
+  
+  // Additional makeup...
+  hQoverP_pfy -> SetMarkerSize (0.8);
+  hQoverP_pfy -> SetMarkerColor(629);
+  hQoverP_pfy -> SetLineWidth  (1);
+  hQoverP_pfy -> GetXaxis()    -> SetTitleOffset(1);
+
+  hQoverP_pfy -> GetYaxis()    -> SetTitle("q/P_{T}^{raw} [1/Gev]");
+  hQoverP_pfy -> GetYaxis()    -> SetTitleOffset(1);
+
+  hQoverP_pfy -> Draw("");
+
+  titleCanv = "Profile in q/P_{T}^{reco'd}";
+  if (phiMin ==0  && phiMax == Pi  ) titleCanv += (" (Top Sectors)"   );
+  if (phiMin ==Pi && phiMax == 2*Pi) titleCanv += (" (Bottom Sectors)");
+
+  PrintIt(QoverP_pfy, titleCanv.Data());
+
+  if (isSave) {
+    QoverP_pfy->SaveAs("eps/"+runNumber+"/qPtRawVsqPtReco_pfy-"
+		       +runNumber+"-"+phiCut+".eps");
+    QoverP_pfy->SaveAs("png/"+runNumber+"/qPtRawVsqPtReco_pfy-"
+		       +runNumber+"-"+phiCut+".png");
+  }
+
+
+  // --------------------------------------------------------------------------- 
+  // ChrgValid
+  // ---------------------------------------------------------------------------  
+  SetStyleh1(hChargeValid   , 622, 1001, 1, "charge");
+  TCanvas* ChargeValid 
+    = new TCanvas("ChargeValid", "is charge valid?", 0, 1000, 400, 400);
+  
+  hChargeValid -> Draw();
+
+  titleCanv = "Is charge valid?";
+  if (phiMin ==0  && phiMax == Pi  ) titleCanv += (" (Top Sectors)"   );
+  if (phiMin ==Pi && phiMax == 2*Pi) titleCanv += (" (Bottom Sectors)");
+
+  PrintIt(ChargeValid, titleCanv.Data());
+
+  if (isSave) {
+    ChargeValid->SaveAs("eps/"+runNumber+"/chargeValid-"
+			+runNumber+"-"+phiCut+".eps");
+    ChargeValid->SaveAs("png/"+runNumber+"/chargeValid-"
+			+runNumber+"-"+phiCut+".png");
+  }
+
+
+  // --------------------------------------------------------------------------- 
+  // ChrgRaw Vs ChrgReco
+  // ---------------------------------------------------------------------------  
+  SetStyleh2(hChrgRawVsChrgReco, 1, 0.1, "q^{raw}", "q^{reco}");
+  TCanvas* ChrgRawVsChrgReco 
+    = new TCanvas("ChrgRawVsChrgReco", 
+		  "ChrgRawVsChrgReco", 420, 1000, 400, 400);
+  
+  hChrgRawVsChrgReco -> Draw("COLZ");
+
+  SetMargin(ChrgRawVsChrgReco);
+
+  titleCanv = "q^{raw} vs q^{reco}";
+  if (phiMin ==0  && phiMax == Pi  ) titleCanv += (" (Top Sectors)"   );
+  if (phiMin ==Pi && phiMax == 2*Pi) titleCanv += (" (Bottom Sectors)");
+
+  PrintIt(ChrgRawVsChrgReco , titleCanv.Data());
+
+  if (isSave) { 
+    ChrgRawVsChrgReco->SaveAs("eps/"+runNumber+"/qRawVsqReco-"
+			      +runNumber+"-"+phiCut+".eps");
+    ChrgRawVsChrgReco->SaveAs("png/"+runNumber+"/qRawVsqReco-"
+			      +runNumber+"-"+phiCut+".png");
+  }
+
+  cout << "PtRawVsPtReco has "
+       <<  hPt -> GetEntries() 
+       << " entries\n";
+       
+} // end 
