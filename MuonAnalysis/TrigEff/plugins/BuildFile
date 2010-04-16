@@ -1,0 +1,5 @@
+<use name=MuonAnalysis/TrigEff>
+   <library file="*.cc" name=MuonAnalysisTrigEffPlugins>
+       <flags EDM_PLUGIN=1>
+   </library>
+
