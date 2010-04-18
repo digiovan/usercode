@@ -20,3 +20,5 @@
 <use name=TrackingTools/TransientTrack>
 <use name=TrackingTools/TrajectoryState>
 <use name=TrackingTools/Records>
+<use name=DataFormats/L1CSCTrackFinder>
+<use name=L1Trigger/CSCTrackFinder>

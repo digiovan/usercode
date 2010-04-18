@@ -55,8 +55,19 @@
 #include "TrackingTools/TrajectoryState/interface/TrajectoryStateTransform.h"
 #include "TrackingTools/Records/interface/TrackingComponentsRecord.h"
 
+//CSCTF
+#include "DataFormats/L1CSCTrackFinder/interface/L1CSCTrackCollection.h"
+#include "L1Trigger/CSCTrackFinder/interface/CSCTFPtLUT.h"
+#include "L1Trigger/CSCTrackFinder/interface/CSCSectorReceiverLUT.h"
+#include "CondFormats/L1TObjects/interface/L1MuTriggerScales.h"
+#include "CondFormats/DataRecord/interface/L1MuTriggerScalesRcd.h"
+#include "CondFormats/L1TObjects/interface/L1MuTriggerPtScale.h"
+#include "CondFormats/DataRecord/interface/L1MuTriggerPtScaleRcd.h"
+#include "DataFormats/CSCDigi/interface/CSCCorrelatedLCTDigiCollection.h"
+
 #include <vector>
 #include "TMatrixF.h"
+#include "TMatrixD.h"
 
 //---------------------------------------------------------------------------
 #include "TMath.h"
@@ -67,6 +78,8 @@
 #define MAX_MUONS 100 
 #define MAX_CSC_RECHIT 35 // 4 stations x 6 layers + some overlap between chambers
 #define MAX_TRK_SEGS 10   // max # segments to a given tracker muon
+#define MAX_CSCTF_TRK 36  // max # of CSCTF tracks per BX
+#define MAX_LCTS_PER_TRK 4  // max # of LCTS which form a CSCTF track
 //---------------------------------------------------------------------------
 
 using namespace trigger;
@@ -90,6 +103,8 @@ private:
     std::string outputFile;
     std::string level2module;
     std::string level3module;
+
+    edm::InputTag csctfTag;
 
     // to Remove
     edm::InputTag gpTag;
@@ -369,45 +384,77 @@ private:
     //
     //---------------------------------------------------------------------
 
-    /*   //--------------------------------------------------------------------------- */
-    /*     // TRACK information */
-    /*     //--------------------------------------------------------------------------- */
-    /*     TTree *csctfTTree; */
-    /*     //void fillCSCTF(const edm::Handle<reco::MuonCollection> muons); */
+    //---------------------------------------------------------------------
+    // TRACK information 
+    //---------------------------------------------------------------------
+    TTree *csctfTTree; 
+    void fillCSCTF(const edm::Handle<L1CSCTrackCollection> tracks,
+                   const L1MuTriggerScales  *ts, 
+                   const L1MuTriggerPtScale *tpts, 
+                   CSCSectorReceiverLUT* srLUTs_[5][2]); 
     
-    /*     std::vector<int>*    EndcapTrk; */
-    /*     std::vector<int>*    SectorTrk; */
-    /*     std::vector<int>*    BxTrk; */
+    int SizeTrk;
+    std::vector<int>*    EndcapTrk; 
+    std::vector<int>*    SectorTrk; 
+    std::vector<int>*    BxTrk; 
     
-    /*     std::vector<int>*    me1ID; */
-    /*     std::vector<int>*    me2ID; */
-    /*     std::vector<int>*    me3ID; */
-    /*     std::vector<int>*    me4ID; */
-    /*     std::vector<int>*    mb1ID;     */
+    std::vector<int>*    me1ID; 
+    std::vector<int>*    me2ID; 
+    std::vector<int>*    me3ID; 
+    std::vector<int>*    me4ID; 
+    std::vector<int>*    mb1ID;     
     
-    /*     std::vector<int>*    ModeTrk; */
-    /*     std::vector<float>*  EtaTrk;   */
-    /*     std::vector<float>*  PhiTrk;   */
-    /*     std::vector<float>*  PhiTrk_02PI; */
-    /*     std::vector<float>*  PtTrk;   */
+    std::vector<int>*    OutputLinkTrk; 
     
-    /*     std::vector<int>*    ChargeTrk; */
-    /*     std::vector<int>*    ChargeValidTrk; */
-    /*     std::vector<int>*    QualityTrk; */
-    /*     std::vector<int>*    ForRTrk; */
-    /*     std::vector<int>*    Phi23Trk; */
-    /*     std::vector<int>*    Phi12Trk;   */
-    /*     std::vector<int>*    PhiSignTrk;   */
+    std::vector<int>*    ModeTrk; 
+    std::vector<float>*  EtaTrk;   
+    std::vector<float>*  PhiTrk;   
+    std::vector<float>*  PhiTrk_02PI; 
+    std::vector<float>*  PtTrk;   
     
-    /*     std::vector<int>*    EtaBit;   */
-    /*     std::vector<int>*    PhiBit;   */
-    /*     std::vector<int>*    LocalPhi;   */
-    /*     std::vector<int>*    PtBit;   */
+    std::vector<int>*    ChargeTrk; 
+    std::vector<int>*    ChargeValidTrk; 
+    std::vector<int>*    QualityTrk; 
+    std::vector<int>*    ForRTrk; 
+    std::vector<int>*    Phi23Trk; 
+    std::vector<int>*    Phi12Trk;   
+    std::vector<int>*    PhiSignTrk;   
     
-    /*     std::vector<float>*  PtTrkData;   */
-    /*     std::vector<int>*    QualityTrkData; */
-    /*     std::vector<int>*    OutputLinkTrk; */
-    //---------------------------------------------------------------------------
+    std::vector<int>*    EtaBitTrk;   
+    std::vector<int>*    PhiBitTrk;   
+    std::vector<int>*    PtBitTrk;   
+
+    CSCSectorReceiverLUT* srLUTs_[5][2];
+    const L1MuTriggerScales  *ts;
+    const L1MuTriggerPtScale *tpts;
+    unsigned long long m_scalesCacheID ;
+    unsigned long long m_ptScaleCacheID ;
+
+    // LCT (STUBS FORMING THE TRACK)  
+    // it contains the number of LCT forming a track 
+    std::vector<int>* NumLCTsTrk; 
+    
+    TMatrixD trLctEndcap; 
+    TMatrixD trLctSector; 
+    TMatrixD trLctSubSector; 
+    TMatrixD trLctBx; 
+    TMatrixD trLctBx0; 
+       
+    TMatrixD trLctStation; 
+    TMatrixD trLctRing; 
+    TMatrixD trLctChamber; 
+    TMatrixD trLctTriggerCSCID; 
+    TMatrixD trLctFpga;	  
+
+     // note: the SPs return them in bits 
+    TMatrixD trLctlocalPhi; 
+    TMatrixD trLctglobalPhi;   
+    TMatrixD trLctglobalEta; 
+
+    TMatrixD trLctstripNum;   
+    TMatrixD trLctwireGroup;     
+
+    //---------------------------------------------------------------------
 
     //snippet from HLTEventAnalyzerRAW
     /// module config parameters
@@ -496,8 +543,8 @@ public:
 
     TrajectoryStateOnSurface  surfExtrapTrkSam (reco::TrackRef track, double z);
 
-/*     void csctfInit(); */
-/*     void csctfDel ();  */
+    void csctfInit(); 
+    void csctfDel ();  
 
 };
 

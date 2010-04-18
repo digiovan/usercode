@@ -39,6 +39,7 @@
 
 #include "DataFormats/MuonReco/interface/MuonSelectors.h"
 
+
 #include <cassert>
 
 using namespace trigger;
@@ -62,6 +63,8 @@ TrigEff::TrigEff(const edm::ParameterSet& pset):edm::EDAnalyzer(){
   matching_cone  = pset.getParameter<double>("matching_cone");
   TriggerEventTag= pset.getParameter<InputTag>("TriggerEventTag");
   HLTriggerTag = pset.getParameter<InputTag>("HLTriggerTag");
+
+  csctfTag  = pset.getParameter<InputTag>("csctfTag");
 
   minvLow  = pset.getParameter<double>("minvLow");
   minvHigh = pset.getParameter<double>("minvHigh");
@@ -231,16 +234,16 @@ TrigEff::TrigEff(const edm::ParameterSet& pset):edm::EDAnalyzer(){
   recoMuons->Branch("trkNofMatches"   , &trkNofMatches   );
   recoMuons->Branch("trkIsMatchValid" , &trkIsMatchValid );
 
-  recoMuons->Branch("trkNSegs"        , &trkNSegs           );
-  recoMuons->Branch("trkChamberId"    , &trkSegChamberId    );
-  recoMuons->Branch("trkRing"         , &trkSegRing         );
-  recoMuons->Branch("trkStation"      , &trkSegStation      );
-  recoMuons->Branch("trkEndcap"       , &trkSegEndcap       );
-  recoMuons->Branch("trkTriggerSector", &trkSegTriggerSector);
-  recoMuons->Branch("trkTriggerCscId" , &trkSegTriggerCscId );
-  recoMuons->Branch("trkXfromMatch"   , &trkSegXfromMatch   );
-  recoMuons->Branch("trkYfromMatch"   , &trkSegYfromMatch   );
-  recoMuons->Branch("trkPhifromMatch" , &trkSegPhifromMatch );
+  recoMuons->Branch("trkNSegs"           , &trkNSegs           );
+  recoMuons->Branch("trkSegChamberId"    , &trkSegChamberId    );
+  recoMuons->Branch("trkSegRing"         , &trkSegRing         );
+  recoMuons->Branch("trkSegStation"      , &trkSegStation      );
+  recoMuons->Branch("trkSegEndcap"       , &trkSegEndcap       );
+  recoMuons->Branch("trkSegTriggerSector", &trkSegTriggerSector);
+  recoMuons->Branch("trkSegTriggerCscId" , &trkSegTriggerCscId );
+  recoMuons->Branch("trkSegXfromMatch"   , &trkSegXfromMatch   );
+  recoMuons->Branch("trkSegYfromMatch"   , &trkSegYfromMatch   );
+  recoMuons->Branch("trkSegPhifromMatch" , &trkSegPhifromMatch );
 
   //segment
   recoMuons->Branch("trkSegIsArb", &trkSegIsArb);
@@ -358,39 +361,114 @@ TrigEff::TrigEff(const edm::ParameterSet& pset):edm::EDAnalyzer(){
   l1extraMuons->Branch("rank"        , &rank        );
   //---------------------------------------------------------------------
 
-  //// csctf
-  //csctfTTree->Branch("EndcapTrk"    , &EndcapTrk     );
-  //csctfTTree->Branch("SectorTrk"    , &SectorTrk     );
-  //csctfTTree->Branch("BxTrk"  	    , &BxTrk         );
-  //csctfTTree->Branch("me1ID"  	    , &me1ID         );
-  //csctfTTree->Branch("me2ID"        , &me2ID 	     );
-  //csctfTTree->Branch("me3ID"  	    , &me3ID         );
-  //csctfTTree->Branch("me4ID"  	    , &me4ID         );
-  //csctfTTree->Branch("mb1ID"  	    , &mb1ID         );
-  //csctfTTree->Branch("ModeTrk"      , &ModeTrk       );
-  //csctfTTree->Branch("EtaTrk"  	    , &EtaTrk        );
-  //csctfTTree->Branch("PhiTrk"  	    , &PhiTrk        );
-  //csctfTTree->Branch("PhiTrk_02PI"  , &PhiTrk_02PI   );
-  //csctfTTree->Branch("PtTrk"  	    , &PtTrk         );
-  //csctfTTree->Branch("ChargeTrk"    , &ChargeTrk     );
-  //csctfTTree->Branch("ChargeValidTrk, &ChargeValidTrk);
-  //csctfTTree->Branch("QualityTrk"   , &QualityTrk    );
-  //csctfTTree->Branch("ForRTrk"      , &ForRTrk       );
-  //csctfTTree->Branch("Phi23Trk"     , &Phi23Trk      );
-  //csctfTTree->Branch("Phi12Trk"     , &Phi12Trk      );
-  //csctfTTree->Branch("PhiSignTrk"   , &PhiSignTrk    );
-  //csctfTTree->Branch("EtaBit"  	    , &EtaBit  	     );
-  //csctfTTree->Branch("PhiBit"  	    , &PhiBit  	     );
-  //csctfTTree->Branch("LocalPhi"     , &LocalPhi      );
-  //csctfTTree->Branch("PtBit"  	    , &PtBit   	     );
-  //csctfTTree->Branch("PtTrkData"    , &PtTrkData     );
-  //csctfTTree->Branch("QualityTrkData, &QualityTrkData);
-  //csctfTTree->Branch("OutputLinkTrk", &OutputLinkTrk );
-   
+  csctfTTree = new TTree("csctfTTree","csctfTTree");
+  // csctf
+  csctfTTree->Branch("SizeTrk"       , &SizeTrk,      "SizeTrk/I");
+  csctfTTree->Branch("EndcapTrk"     , &EndcapTrk     );
+  csctfTTree->Branch("SectorTrk"     , &SectorTrk     );
+  csctfTTree->Branch("BxTrk"  	     , &BxTrk         );
+  csctfTTree->Branch("me1ID"  	     , &me1ID         );
+  csctfTTree->Branch("me2ID"         , &me2ID 	      );
+  csctfTTree->Branch("me3ID"  	     , &me3ID         );
+  csctfTTree->Branch("me4ID"  	     , &me4ID         );
+  csctfTTree->Branch("mb1ID"  	     , &mb1ID         );
+  csctfTTree->Branch("OutputLinkTrk" , &OutputLinkTrk );
+  csctfTTree->Branch("ModeTrk"       , &ModeTrk       );
+  csctfTTree->Branch("EtaTrk"  	     , &EtaTrk        );
+  csctfTTree->Branch("PhiTrk"  	     , &PhiTrk        );
+  csctfTTree->Branch("PhiTrk_02PI"   , &PhiTrk_02PI   );
+  csctfTTree->Branch("PtTrk"  	     , &PtTrk         );
+  csctfTTree->Branch("ChargeTrk"     , &ChargeTrk     );
+  csctfTTree->Branch("ChargeValidTrk", &ChargeValidTrk);
+  csctfTTree->Branch("QualityTrk"    , &QualityTrk    );
+  csctfTTree->Branch("ForRTrk"       , &ForRTrk       );
+  csctfTTree->Branch("Phi23Trk"      , &Phi23Trk      );
+  csctfTTree->Branch("Phi12Trk"      , &Phi12Trk      );
+  csctfTTree->Branch("PhiSignTrk"    , &PhiSignTrk    );
+  csctfTTree->Branch("EtaBitTrk"     , &EtaBitTrk     );
+  csctfTTree->Branch("PhiBitTrk"     , &PhiBitTrk     );
+  csctfTTree->Branch("PtBitTrk"      , &PtBitTrk      );
+
+  csctfTTree->Branch("NumLCTsTrk"        , &NumLCTsTrk    );
+  csctfTTree->Branch("trLctEndcap"       , &trLctEndcap   );
+  csctfTTree->Branch("trLctSector"       , &trLctSector   );
+  csctfTTree->Branch("trLctSubSector"    , &trLctSubSector);
+  csctfTTree->Branch("trLctBx"           , &trLctBx       );
+  csctfTTree->Branch("trLctBx0"          , &trLctBx0      );
+                                                                  
+  csctfTTree->Branch("trLctStation"     , &trLctStation     );
+  csctfTTree->Branch("trLctRing"        , &trLctRing        );
+  csctfTTree->Branch("trLctChamber"     , &trLctChamber     );
+  csctfTTree->Branch("trLctTriggerCSCID", &trLctTriggerCSCID);
+  csctfTTree->Branch("trLctFpga"        , &trLctFpga        );
+                                                                     
+  csctfTTree->Branch("trLctlocalPhi"    , &trLctlocalPhi    );
+  csctfTTree->Branch("trLctglobalPhi"   , &trLctglobalPhi   );
+  csctfTTree->Branch("trLctglobalEta"   , &trLctglobalEta   );
+                                                                  
+  csctfTTree->Branch("trLctstripNum"    , &trLctstripNum    );
+  csctfTTree->Branch("trLctwireGroup"   , &trLctwireGroup   );
+
+
+  // -----------------------------------------------------------------------------
+  // csctf does not preserve information about the LCT (stubs) which forms
+  // the track so we need to retrieve this information. In order to do so
+  // we need to initialize the Sector Receiver LUTs in the software
+  
+  bzero(srLUTs_ , sizeof(srLUTs_));
+  int sector=1;    // assume SR LUTs are all same for every sector
+  bool TMB07=true; // specific TMB firmware
+  // Create a pset for SR/PT LUTs: if you do not change the value in the 
+  // configuration file, it will load the default minitLUTs
+  edm::ParameterSet srLUTset;
+  srLUTset.addUntrackedParameter<bool>("ReadLUTs", false);
+  srLUTset.addUntrackedParameter<bool>("Binary",   false);
+  srLUTset.addUntrackedParameter<std::string>("LUTPath", "./");
+ 
+   // positive endcap
+  int endcap = 1; 
+  for(int station=1,fpga=0; station<=4 && fpga<5; station++)
+    {
+      if(station==1)
+	for(int subSector=0; subSector<2 && fpga<5; subSector++)
+	  srLUTs_[fpga++][1] = new CSCSectorReceiverLUT(endcap,sector,subSector+1,
+							station, srLUTset, TMB07);
+      else
+	srLUTs_[fpga++][1]   = new CSCSectorReceiverLUT(endcap,  sector,   0, 
+							station, srLUTset, TMB07);
+    }
+
+  // negative endcap
+  endcap = 2; 
+  for(int station=1,fpga=0; station<=4 && fpga<5; station++)
+    {
+      if(station==1)
+	for(int subSector=0; subSector<2 && fpga<5; subSector++)
+	  srLUTs_[fpga++][0] = new CSCSectorReceiverLUT(endcap,sector,subSector+1,
+							station, srLUTset, TMB07);
+      else
+	srLUTs_[fpga++][0]   = new CSCSectorReceiverLUT(endcap,  sector,   0, 
+							station, srLUTset, TMB07);
+    }
+  // -----------------------------------------------------------------------------
+  
 }
 
 // destructor
-TrigEff::~TrigEff(void){ file->Write(); file->Close(); }
+TrigEff::~TrigEff(void){ 
+
+  file->Write(); 
+  file->Close(); 
+
+  //free the CSCTF array of pointers
+  for(int j=0; j<2; j++) 
+    for(int i=0; i<5; i++) 
+      delete srLUTs_[i][j]; 
+  
+  delete ts;
+  delete tpts;
+
+}
 
 // analyze
 void TrigEff::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup){
@@ -415,10 +493,6 @@ void TrigEff::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup){
 //   }
 
   
-  // Second: get global muons, stand alone muons, and track
-  Handle<MuonCollection>  muons;
-  if( muonsTag.label() != "null" ) iEvent.getByLabel(muonsTag, muons);
-
   //Get the Magnetic field from the setup
   iSetup.get<IdealMagneticFieldRecord>().get(theBField);
   // Get the GlobalTrackingGeometry from the setup
@@ -442,12 +516,12 @@ void TrigEff::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup){
   Orbit = iEvent.orbitNumber();     //overwritten by EVM info until fixed by fw
   
   // ============================================================================
-  // Now start with creating array of di-muon pairs on the 
-  // reconstruction level (called true)
+  // fill the reco muon block
+  // Second: get global muons, stand alone muons, and track
+  Handle<MuonCollection>  muons;
+  if( muonsTag.label() != "null" ) iEvent.getByLabel(muonsTag, muons);
 
-  if (printLevel > 0) cout<<"============ DI MUONS PAIRS ================"<<endl; 
-  map< MuonRef, vector< pair< MuonRef, double > > > trueDiMuons;
-  
+  if (printLevel > 0) cout<<"============ FILLING MUONS  ================"<<endl; 
   if( muons.isValid() ){
 
     muonsInit();
@@ -464,30 +538,25 @@ void TrigEff::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup){
     muonsDel();
   }
 
- if (printLevel > 0) {
+  if (printLevel > 0) {
     cout<<"======================================================"<<endl; 
-    cout<<"Level-1: "<<endl;
+    cout<<"Level-1 extra: "<<endl;
   }
 
+  // ============================================================================
+  // fill all the l1 information per event in a ttree
   Handle<l1extra::L1MuonParticleCollection> l1muons;
   if( L1extraTag.label() != "null" ) iEvent.getByLabel(L1extraTag, l1muons);
 
-  // Assign similar container, mapping muon to pairs of track and 
-  // matching Level-1 candidate, if the last exists
-  map< MuonRef, vector< pair<TrackRef,l1extra::L1MuonParticleCollection::const_iterator> > > diMuonCandidates_l1;
-  
   // Fetch all Level-1 muon candidates
   if( l1muons.isValid() ){
-
-
-    // ============================================================================
-    // fill all the l1 information per event in a ttree
+    
     if (printLevel > 0) {
       printf("============================================================\n");
       printf("%-20s: %d\n\n", "l1muons->size()"     , l1muons->size()        );
       printf("  %-30s: %d\n", "isl1MuonsValid()"    , l1muons.isValid()      );  
     }
-
+    
     l1Size = l1muons->size();
     l1extraInit();
     
@@ -504,6 +573,47 @@ void TrigEff::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup){
     l1extraMuons->Fill();
     l1extraDel();
   } 
+
+  // ============================================================================
+  // fill the csctf raw block
+  Handle<L1CSCTrackCollection> CSCTFtracks;
+  if( csctfTag.label() != "null" ) {
+    iEvent.getByLabel(csctfTag, CSCTFtracks);
+    if (printLevel > 0) cout<<"============ FILLING CSCTF RAW  ============\n";
+  }
+
+  if( CSCTFtracks.isValid() ){
+    
+    //initialize
+    csctfInit();
+
+    if( iSetup.get< L1MuTriggerScalesRcd > ().cacheIdentifier() != m_scalesCacheID ||
+        iSetup.get< L1MuTriggerPtScaleRcd >().cacheIdentifier() != m_ptScaleCacheID ){
+      
+      ESHandle< L1MuTriggerScales > scales;
+      iSetup.get< L1MuTriggerScalesRcd >().get(scales);
+      ts = scales.product();
+      ESHandle< L1MuTriggerPtScale > ptscales;
+      iSetup.get< L1MuTriggerPtScaleRcd >().get(ptscales);
+      tpts = ptscales.product();
+      m_scalesCacheID  = iSetup.get< L1MuTriggerScalesRcd  >().cacheIdentifier();
+      m_ptScaleCacheID = iSetup.get< L1MuTriggerPtScaleRcd >().cacheIdentifier();
+      
+      std::cout  << "Changing triggerscales and triggerptscales...\n";
+    }    
+    
+    //fill the csctf information
+    fillCSCTF(CSCTFtracks,
+              ts,
+              tpts,
+              srLUTs_);
+    csctfTTree->Fill();
+
+    //clean-up the pointers
+    csctfDel();
+  } 
+  else 
+    cout << "Invalid L1CSCTrackCollection... skipping it\n";
   
 }
 
@@ -1922,78 +2032,381 @@ void TrigEff::resizeRchHits(int nMu_nMaxCscRchHits){
   }
 }
 
-// void TrigEff::csctfInit() {	
-    
-//   EndcapTrk     = new vector<int>;
-//   SectorTrk     = new vector<int>;  
-//   BxTrk         = new vector<int>;  
-       	    
-//   me1ID         = new vector<int>;  
-//   me2ID         = new vector<int>;
-//   me3ID         = new vector<int>;  
-//   me4ID         = new vector<int>;  
-//   mb1ID         = new vector<int>;  
-
-//   ModeTrk       = new vector<int>  ;
-//   EtaTrk        = new vector<float>;  
-//   PhiTrk        = new vector<float>;  
-//   PhiTrk_02PI   = new vector<float>;  
-//   PtTrk         = new vector<float>;  
-    
-//   ChargeValidTrk = new vector<int>;
-//   ChargeTrk      = new vector<int>;
-//   QualityTrk     = new vector<int>;
-//   ForRTrk        = new vector<int>;
-//   Phi23Trk       = new vector<int>;
-//   Phi12Trk       = new vector<int>;
-//   PhiSignTrk     = new vector<int>;
-
-//   EtaBit        = new vector<int>;
-//   PhiBit        = new vector<int>;
-//   LocalPhi      = new vector<int>;
-//   PtBit         = new vector<int>;
-
-//   PtTrkData     = new vector<float>;
-//   QualityTrkData= new vector<int>;   
-//   OutputLinkTrk = new vector<int>;      
-
-// }
-
-// void TrigEff::csctfDel() {	
-
-//   vector<int>().swap(*EndcapTrk); 
-//   vector<int>().swap(*SectorTrk); 
-//   vector<int>().swap(*BxTrk    ); 
+void TrigEff::csctfInit() {	
   
-//   vector<int>().swap(*me1ID); 
-//   vector<int>().swap(*me2ID); 
-//   vector<int>().swap(*me3ID); 
-//   vector<int>().swap(*me4ID); 
-//   vector<int>().swap(*mb1ID); 
+  EndcapTrk     = new vector<int>;
+  SectorTrk     = new vector<int>;  
+  BxTrk         = new vector<int>;  
+     	    
+  me1ID         = new vector<int>;  
+  me2ID         = new vector<int>;
+  me3ID         = new vector<int>;  
+  me4ID         = new vector<int>;  
+  mb1ID         = new vector<int>;  
 
-//   vector<int>  ().swap(*ModeTrk    ); 
-//   vector<float>().swap(*EtaTrk     ); 
-//   vector<float>().swap(*PhiTrk     ); 
-//   vector<float>().swap(*PhiTrk_02PI); 
-//   vector<float>().swap(*PtTrk      ); 
+  OutputLinkTrk = new vector<int>;      
 
-//   vector<int>().swap(*ChargeTrk      ); 
-//   vector<int>().swap(*ChargeValidTrk ); 
-//   vector<int>().swap(*QualityTrk     ); 
-//   vector<int>().swap(*ForRTrk        ); 
-//   vector<int>().swap(*Phi23Trk       ); 
-//   vector<int>().swap(*Phi12Trk       ); 
-//   vector<int>().swap(*PhiSignTrk     ); 
-
-//   vector<int>().swap(*EtaBit);
-//   vector<int>().swap(*PhiBit);
-//   vector<int>().swap(*LocalPhi);
-//   vector<int>().swap(*PtBit );
+  ModeTrk       = new vector<int>  ;
+  EtaTrk        = new vector<float>;  
+  PhiTrk        = new vector<float>;  
+  PhiTrk_02PI   = new vector<float>;  
+  PtTrk         = new vector<float>;  
   
-//   vector<float>().swap(*PtTrkData);  
-//   vector<int>().swap(*QualityTrkData);
-//   vector<int>().swap(*OutputLinkTrk);
-// }
+  ChargeValidTrk = new vector<int>;
+  ChargeTrk      = new vector<int>;
+  QualityTrk     = new vector<int>;
+  ForRTrk        = new vector<int>;
+  Phi23Trk       = new vector<int>;
+  Phi12Trk       = new vector<int>;
+  PhiSignTrk     = new vector<int>;
+
+  EtaBitTrk      = new vector<int>;
+  PhiBitTrk      = new vector<int>;
+  PtBitTrk       = new vector<int>;
+
+  NumLCTsTrk    = new vector<int>; 
+    
+  trLctEndcap.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK); 
+  trLctSector.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK); 
+  trLctSubSector.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK); 
+  trLctBx.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK); 
+  trLctBx0.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK); 
+  
+  trLctStation.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK); 
+  trLctRing.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK); 
+  trLctChamber.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK); 
+  trLctTriggerCSCID.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK); 
+  trLctFpga.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK);	  
+  
+  trLctlocalPhi.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK); 
+  trLctglobalPhi.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK);   
+  trLctglobalEta.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK); 
+  
+  trLctstripNum.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK);   
+  trLctwireGroup.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK);     
+
+}
+
+void TrigEff::csctfDel() {	
+
+  vector<int>().swap(*EndcapTrk); 
+  vector<int>().swap(*SectorTrk); 
+  vector<int>().swap(*BxTrk    ); 
+
+  vector<int>().swap(*me1ID); 
+  vector<int>().swap(*me2ID); 
+  vector<int>().swap(*me3ID); 
+  vector<int>().swap(*me4ID); 
+  vector<int>().swap(*mb1ID); 
+
+  vector<int>().swap(*OutputLinkTrk);
+
+  vector<int>  ().swap(*ModeTrk    ); 
+  vector<float>().swap(*EtaTrk     ); 
+  vector<float>().swap(*PhiTrk     ); 
+  vector<float>().swap(*PhiTrk_02PI); 
+  vector<float>().swap(*PtTrk      ); 
+
+  vector<int>().swap(*ChargeTrk      ); 
+  vector<int>().swap(*ChargeValidTrk ); 
+  vector<int>().swap(*QualityTrk     ); 
+  vector<int>().swap(*ForRTrk        ); 
+  vector<int>().swap(*Phi23Trk       ); 
+  vector<int>().swap(*Phi12Trk       ); 
+  vector<int>().swap(*PhiSignTrk     ); 
+
+  vector<int>().swap(*EtaBitTrk);
+  vector<int>().swap(*PhiBitTrk);
+  vector<int>().swap(*PtBitTrk );
+
+  vector<int>().swap(*NumLCTsTrk );
+
+}
+
+
+void TrigEff::fillCSCTF(const edm::Handle<L1CSCTrackCollection> tracks,
+                        const L1MuTriggerScales  *ts, 
+                        const L1MuTriggerPtScale *tpts, 
+                        CSCSectorReceiverLUT* srLUTs_[5][2]) {
+  
+  int nTrk=0; 
+  // loop over CSCTF tracks
+  for(L1CSCTrackCollection::const_iterator trk=tracks->begin(); 
+      trk<tracks->end(); trk++){
+    
+    nTrk++;
+
+    // Standard Pt LUTs	  
+    edm::ParameterSet ptLUTset;
+    ptLUTset.addUntrackedParameter<bool>("ReadLUTs", false);
+    ptLUTset.addUntrackedParameter<bool>("Binary",   false);
+    ptLUTset.addUntrackedParameter<std::string>("LUTPath", "./");
+
+    /*      
+    // Reading Pt LUTs from file
+    edm::ParameterSet ptLUTset;	    
+    ptLUTset.addUntrackedParameter<bool>("ReadPtLUT", true);
+    ptLUTset.addUntrackedParameter<bool>("isBinary",  true);
+    ptLUTset.addUntrackedParameter<bool>("isBeamStartConf", true);
+    
+    edm::FileInPath pt_lut_file;  
+    pt_lut_file = edm::FileInPath("../results/cfg/L1CSCPtLUT.bin");
+    ptLUTset.addParameter<edm::FileInPath>("PtLUTFile",pt_lut_file);
+    */
+    
+    //CSCTFPtLUT* ptLUT = new CSCTFPtLUT(ptLUTset, ts, tpts);
+    CSCTFPtLUT ptLUT(ptLUTset, ts, tpts);
+    
+    //define the variables
+    // trk->first.endcap() = 2 for - endcap
+    //                     = 1 for + endcap
+    int    trEndcap = (trk->first.endcap()==2 ? trk->first.endcap()-3 : trk->first.endcap());
+    int    trSector = 6*(trk->first.endcap()-1)+trk->first.sector();
+    int    trBX     = trk->first.BX();
+    int    trMe1ID = trk->first.me1ID();
+    int    trMe2ID = trk->first.me2ID();
+    int    trMe3ID = trk->first.me3ID();
+    int    trMe4ID = trk->first.me4ID();
+    int    trMb1ID = trk->first.mb1ID();
+
+    int    trEtaBit = trk->first.eta_packed();
+    int    trPhiBit = trk->first.localPhi();
+    int    trCharge = trk->first.chargeValue();
+
+    int    trRank   = trk->first.rank();    
+
+    // PtAddress gives an handle on other parameters
+    ptadd thePtAddress(trk->first.ptLUTAddress());
+	
+    int trPhiSign = thePtAddress.delta_phi_sign;
+    int trPhi12   = thePtAddress.delta_phi_12;
+    int trPhi23   = thePtAddress.delta_phi_23;
+    int trMode    = thePtAddress.track_mode;
+    int trForR    = thePtAddress.track_fr;
+	
+    int trOutputLink = trk->first.outputLink();
+
+    //Pt needs some more workaround since it is not in the unpacked data
+    //ptdat thePtData  = ptLUT->Pt(thePtAddress);
+    ptdat thePtData  = ptLUT.Pt(thePtAddress);
+	
+    int trPtBit       = 0;
+    int trQuality     = 0;
+    int trChargeValid = 0;
+
+    // front or rear bit? 
+    if (thePtAddress.track_fr) {
+      trPtBit = (thePtData.front_rank&0x1f);
+      trQuality = ((thePtData.front_rank>>5)&0x3);
+      trChargeValid = thePtData.charge_valid_front;
+    } else {
+      trPtBit = (thePtData.rear_rank&0x1f);
+      trQuality = ((thePtData.rear_rank>>5)&0x3);
+      trChargeValid = thePtData.charge_valid_rear;
+    }
+	  
+    if (printLevel > 0) {
+      cout << " ===== CSCTF BIT VALUES ====\n"
+           << " Track #"        << nTrk
+           << "\n Endcap: "     << trEndcap
+           << "\n Sector: "     << trSector 
+           << "\n BX: "         << trBX 
+           << "\n me1ID: "      << trMe1ID 			
+	   << "\n me2ID: "      << trMe2ID
+	   << "\n me3ID: "      << trMe3ID
+	   << "\n me4ID: "      << trMe4ID 
+           << "\n mb1ID: "      << trMb1ID 
+           << "\n OutputLink: " << trOutputLink
+        
+           << "\n Charge: "     << trCharge
+           << "\n DPhiSign: "   << trPhiSign
+	   << "\n DPhi12: "     << trPhi12
+	   << "\n DPhi23: "     << trPhi23
+	   << "\n ForR: "       << trForR
+                                
+           << "\n Mode: "       << trMode 
+           << "\n Quality: "    << trQuality 
+           << "\n Rank : "      << trRank 
+           << "\n ChargeValid: "<< trChargeValid
+           << "\n Eta: "        << trEtaBit 
+           << "\n Phi: "        << trPhiBit
+           << "\n Pt: "         << trPtBit
+           << endl;         
+    }
+
+    //... in radians
+    // Type 2 is CSC
+    double trEta = ts->getRegionalEtaScale(2)->getCenter(trk->first.eta_packed());
+    double trPhi = ts->getPhiScale()->getLowEdge(trk->first.localPhi());
+    //Phi in one sector varies from [0,62] degrees -> Rescale manually to global coords.
+    double trPhi02PI = fmod(trPhi + 
+                            ((trSector-1)*TMath::Pi()/3) + //sector 1 starts at 15 degrees 
+                            (TMath::Pi()/12) , 2*TMath::Pi());
+    
+    // convert the Pt in human readable values (GeV/c)
+    double trPt = tpts->getPtScale()->getLowEdge(trPtBit); 
+
+
+    if (printLevel > 0) {
+      cout << " ===== CSCTF TRK SCALES ====\n"
+           << "\n Eta(scales): " << trEta 
+           << "\n Phi(scales): " << trPhi02PI
+           << "\n Pt(scales): "  << trPt
+           << endl;
+    }
+
+    // fill the track vectors
+    EndcapTrk      -> push_back(trEndcap);
+    SectorTrk      -> push_back(trSector); 
+    BxTrk          -> push_back(trBX    ); 
+    me1ID          -> push_back(trMe1ID);  
+    me2ID          -> push_back(trMe2ID);
+    me3ID          -> push_back(trMe3ID); 
+    me4ID          -> push_back(trMe4ID); 
+    mb1ID          -> push_back(trMb1ID);  
+    OutputLinkTrk  -> push_back(trOutputLink);  
+
+    ModeTrk        -> push_back(trMode   );
+    EtaTrk         -> push_back(trEta    ); 
+    PhiTrk         -> push_back(trPhi    ); 
+    PhiTrk_02PI    -> push_back(trPhi02PI); 
+    PtTrk          -> push_back(trPt     );  
+
+    ChargeValidTrk -> push_back(trChargeValid);
+    ChargeTrk      -> push_back(trCharge     );
+    QualityTrk     -> push_back(trQuality    );
+    ForRTrk        -> push_back(trForR       );
+    Phi23Trk       -> push_back(trPhi23      );
+    Phi12Trk       -> push_back(trPhi12      );
+    PhiSignTrk     -> push_back(trPhiSign    );
+      	       
+    EtaBitTrk      -> push_back(trEtaBit); 
+    PhiBitTrk      -> push_back(trPhiBit); 
+    PtBitTrk       -> push_back(trPtBit );  
+
+
+    // For each trk, get the list of its LCTs
+    CSCCorrelatedLCTDigiCollection lctsOfTracks = trk -> second;
+  
+    int LctTrkId_ = 0;
+
+    for(CSCCorrelatedLCTDigiCollection::DigiRangeIterator lctOfTrks = lctsOfTracks.begin(); 
+        lctOfTrks  != lctsOfTracks.end()  ; lctOfTrks++){
+	  
+      int lctTrkId = 0;	
+			
+      CSCCorrelatedLCTDigiCollection::Range lctRange = 
+        lctsOfTracks.get((*lctOfTrks).first);
+	  
+      for(CSCCorrelatedLCTDigiCollection::const_iterator 
+            lctTrk = lctRange.first ; 
+          lctTrk  != lctRange.second; lctTrk++, lctTrkId++){
+
+        cout << "nTrk-1: " << nTrk-1 << endl;
+        cout << "LctTrkId_: " << LctTrkId_ << endl;
+
+        trLctEndcap[nTrk-1][LctTrkId_] = (*lctOfTrks).first.zendcap();
+        // sector (pos: 1->6, neg: 7 -> 12)
+        if ((*lctOfTrks).first.zendcap() > 0)
+          trLctSector[nTrk-1][LctTrkId_] = (*lctOfTrks).first.triggerSector();
+        else
+          trLctSector[nTrk-1][LctTrkId_] = 6+(*lctOfTrks).first.triggerSector();
+   	  
+        trLctSubSector[nTrk-1][LctTrkId_] = CSCTriggerNumbering::triggerSubSectorFromLabels((*lctOfTrks).first);;
+        trLctBx[nTrk-1][LctTrkId_] = lctTrk -> getBX();
+        trLctBx0[nTrk-1][LctTrkId_] = lctTrk -> getBX0();
+	      
+        trLctStation[nTrk-1][LctTrkId_] = (*lctOfTrks).first.station();
+        trLctRing[nTrk-1][LctTrkId_] = (*lctOfTrks).first.ring();
+        trLctChamber[nTrk-1][LctTrkId_] = (*lctOfTrks).first.chamber();
+        trLctTriggerCSCID[nTrk-1][LctTrkId_] = (*lctOfTrks).first.triggerCscId();
+        trLctFpga[nTrk-1][LctTrkId_] = 
+          ( trLctSubSector[nTrk-1][LctTrkId_] ? trLctSubSector[nTrk-1][LctTrkId_] : (*lctOfTrks).first.station()+1);
+
+        // Check if DetId is within range
+        if( trLctSector[nTrk-1][LctTrkId_] < 1       || trLctSector[nTrk-1][LctTrkId_] > 12 || 
+            trLctStation[nTrk-1][LctTrkId_] < 1      || trLctStation[nTrk-1][LctTrkId_] >  4 || 
+            trLctTriggerCSCID[nTrk-1][LctTrkId_] < 1 || trLctTriggerCSCID[nTrk-1][LctTrkId_] >  9 || 
+            lctTrkId < 0 || lctTrkId >  1 ){
+          cout <<"  TRACK ERROR: CSC digi are out of range: ";
+          continue;
+        }
+
+        // handles not to overload the method: mostly for readability	      
+        int endcap = (*lctOfTrks).first.zendcap();
+        if (endcap < 0) endcap = 0; 
+
+        int StationLctTrk  = (*lctOfTrks).first.station();
+        int CscIdLctTrk    = (*lctOfTrks).first.triggerCscId();
+        int SubSectorLctTrk = 
+          CSCTriggerNumbering::triggerSubSectorFromLabels((*lctOfTrks).first);
+        
+        int FPGALctTrk    = 
+          ( SubSectorLctTrk ? SubSectorLctTrk-1 : StationLctTrk );
+        
+	      
+        // local Phi
+        lclphidat lclPhi;
+	
+        try {
+          
+          trLctstripNum[nTrk-1][LctTrkId_] = lctTrk->getStrip();
+          lclPhi = srLUTs_[FPGALctTrk][endcap] -> localPhi(lctTrk->getStrip(), 
+                                                           lctTrk->getPattern(), 
+                                                           lctTrk->getQuality(), 
+                                                           lctTrk->getBend() );
+          
+          trLctlocalPhi[nTrk-1][LctTrkId_] = lclPhi.phi_local;
+        } 
+        catch(...) { 
+          bzero(&lclPhi,sizeof(lclPhi)); 
+          trLctlocalPhi[nTrk-1][LctTrkId_] = -999;
+        }
+		
+        
+        // Global Phi
+        gblphidat gblPhi;
+	
+        try {
+          
+          trLctwireGroup[nTrk-1][LctTrkId_] = lctTrk->getKeyWG();
+          gblPhi = srLUTs_[FPGALctTrk][endcap] -> globalPhiME(lclPhi.phi_local  , 
+                                                              lctTrk->getKeyWG(), 
+                                                              CscIdLctTrk);
+          
+          trLctglobalPhi[nTrk-1][LctTrkId_] = gblPhi.global_phi;
+          
+        } catch(...) { 
+          bzero(&gblPhi,sizeof(gblPhi)); 
+          trLctglobalPhi[nTrk-1][LctTrkId_] = -999;
+        }
+		
+        // Global Eta
+        gbletadat gblEta;
+	
+        try {
+          gblEta = srLUTs_[FPGALctTrk][endcap] -> globalEtaME(lclPhi.phi_bend_local, 
+                                                              lclPhi.phi_local     , 
+                                                              lctTrk->getKeyWG()   , 
+                                                              CscIdLctTrk);
+          trLctglobalEta[nTrk-1][LctTrkId_] = gblEta.global_eta;
+        } 	  
+        catch(...) { 
+          bzero(&gblEta,sizeof(gblEta)); 
+          trLctglobalEta[nTrk-1][LctTrkId_] = -999;
+        } 
+	
+        ++LctTrkId_;
+	
+      } // for(CSCCorrelatedLCTDigiCollection::const_iterator lctTrk 
+    } // for(CSCCorrelatedLCTDigiCollection::DigiRangeIterator lctOfTrks
+	  
+    NumLCTsTrk->push_back(LctTrkId_);
+  	     
+  } //for(L1CSCTrackCollection::const_iterator trk=csctfTrks->begin(); trk<csctfTrks->end(); trk++,nTrk++){
+
+  SizeTrk = nTrk;
+}
 
 
 // this code snippet was taken from 
