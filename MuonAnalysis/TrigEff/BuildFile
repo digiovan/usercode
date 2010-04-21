@@ -22,3 +22,12 @@
 <use name=TrackingTools/Records>
 <use name=DataFormats/L1CSCTrackFinder>
 <use name=L1Trigger/CSCTrackFinder>
+
+<use name=DataFormats/TrackReco>
+<use name=DataFormats/L1GlobalTrigger>
+<use name=DataFormats/Math>
+<use name=RecoMuon/TrackingTools>
+<use name=Geometry/Records>
+<use name=Geometry/CommonDetUnit>
+<use name=boost>
+<use name=rootcore>

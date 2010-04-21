@@ -64,7 +64,8 @@ TrigEff::TrigEff(const edm::ParameterSet& pset):edm::EDAnalyzer(){
   TriggerEventTag= pset.getParameter<InputTag>("TriggerEventTag");
   HLTriggerTag = pset.getParameter<InputTag>("HLTriggerTag");
 
-  csctfTag  = pset.getParameter<InputTag>("csctfTag");
+  csctfTag      = pset.getParameter<InputTag>("csctfTag");
+  csctfLctsTag  = pset.getParameter<InputTag>("csctfLctsTag");
 
   minvLow  = pset.getParameter<double>("minvLow");
   minvHigh = pset.getParameter<double>("minvHigh");
@@ -233,24 +234,53 @@ TrigEff::TrigEff(const edm::ParameterSet& pset):edm::EDAnalyzer(){
   recoMuons->Branch("trkNchambers"    , &trkNchambers    );
   recoMuons->Branch("trkNofMatches"   , &trkNofMatches   );
   recoMuons->Branch("trkIsMatchValid" , &trkIsMatchValid );
+  
+  recoMuons->Branch("trkNSegs"           , &trkNSegs);
 
-  recoMuons->Branch("trkNSegs"           , &trkNSegs           );
-  recoMuons->Branch("trkSegChamberId"    , &trkSegChamberId    );
-  recoMuons->Branch("trkSegRing"         , &trkSegRing         );
-  recoMuons->Branch("trkSegStation"      , &trkSegStation      );
-  recoMuons->Branch("trkSegEndcap"       , &trkSegEndcap       );
-  recoMuons->Branch("trkSegTriggerSector", &trkSegTriggerSector);
-  recoMuons->Branch("trkSegTriggerCscId" , &trkSegTriggerCscId );
-  recoMuons->Branch("trkSegXfromMatch"   , &trkSegXfromMatch   );
-  recoMuons->Branch("trkSegYfromMatch"   , &trkSegYfromMatch   );
-  recoMuons->Branch("trkSegPhifromMatch" , &trkSegPhifromMatch );
+  recoMuons->Branch("trkSegChamberId"    , trkSegChamberId    ,"trkSegChamberId[muonSize][100]/I");
+  recoMuons->Branch("trkSegRing"         , trkSegRing         ,"trkSegRing[muonSize][100]/I");
+  recoMuons->Branch("trkSegStation"      , trkSegStation      ,"trkSegStation[muonSize][100]/I");
+  recoMuons->Branch("trkSegEndcap"       , trkSegEndcap       ,"trkSegEndcap[muonSize][100]/I");
+  recoMuons->Branch("trkSegTriggerSector", trkSegTriggerSector,"trkSegTriggerSector[muonSize][100]/I");
+  recoMuons->Branch("trkSegTriggerCscId" , trkSegTriggerCscId ,"trkSegTriggerCscId[muonSize][100]/I");
+  recoMuons->Branch("trkSegXfromMatch"   , trkSegXfromMatch   ,"trkSegXfromMatch[muonSize][100]/F");
+  recoMuons->Branch("trkSegYfromMatch"   , trkSegYfromMatch   ,"trkSegYfromMatch[muonSize][100]/F");
+  recoMuons->Branch("trkSegZfromMatch"   , trkSegZfromMatch   ,"trkSegZfromMatch[muonSize][100]/F");
+  recoMuons->Branch("trkSegRfromMatch"   , trkSegRfromMatch   ,"trkSegRfromMatch[muonSize][100]/F");
+  recoMuons->Branch("trkSegPhifromMatch" , trkSegPhifromMatch ,"trkSegPhifromMatch[muonSize][100]/F");
+  recoMuons->Branch("trkSegEtafromMatch" , trkSegEtafromMatch ,"trkSegEtafromMatch[muonSize][100]/F");
 
   //segment
-  recoMuons->Branch("trkSegIsArb", &trkSegIsArb);
-  recoMuons->Branch("trkSegX"    , &trkSegX    );
-  recoMuons->Branch("trkSegY"    , &trkSegY    );
-  recoMuons->Branch("trkSegR"    , &trkSegR    );
-  recoMuons->Branch("trkSegPhi"  , &trkSegPhi  );
+  recoMuons->Branch("trkSegIsArb", &trkSegIsArb, "trkSegIsArb[muonSize][100]/I");
+  recoMuons->Branch("trkSegX"    , &trkSegX    , "trkSegX[muonSize][100]/F");
+  recoMuons->Branch("trkSegY"    , &trkSegY    , "trkSegY[muonSize][100]/F");
+  recoMuons->Branch("trkSegZ"    , &trkSegZ    , "trkSegZ[muonSize][100]/F");
+  recoMuons->Branch("trkSegR"    , &trkSegR    , "trkSegR[muonSize][100]/F");
+  recoMuons->Branch("trkSegPhi"  , &trkSegPhi  , "trkSegPhi[muonSize][100]/F");
+  recoMuons->Branch("trkSegEta"  , &trkSegEta  , "trkSegEta[muonSize][100]/F");
+
+//   recoMuons->Branch("trkNSegs"           , &trkNSegs           );
+//   recoMuons->Branch("trkSegChamberId"    , &trkSegChamberId    );
+//   recoMuons->Branch("trkSegRing"         , &trkSegRing         );
+//   recoMuons->Branch("trkSegStation"      , &trkSegStation      );
+//   recoMuons->Branch("trkSegEndcap"       , &trkSegEndcap       );
+//   recoMuons->Branch("trkSegTriggerSector", &trkSegTriggerSector);
+//   recoMuons->Branch("trkSegTriggerCscId" , &trkSegTriggerCscId );
+//   recoMuons->Branch("trkSegXfromMatch"   , &trkSegXfromMatch   );
+//   recoMuons->Branch("trkSegYfromMatch"   , &trkSegYfromMatch   );
+//   recoMuons->Branch("trkSegZfromMatch"   , &trkSegZfromMatch   );
+//   recoMuons->Branch("trkSegRfromMatch"   , &trkSegRfromMatch   );
+//   recoMuons->Branch("trkSegPhifromMatch" , &trkSegPhifromMatch );
+//   recoMuons->Branch("trkSegEtafromMatch" , &trkSegEtafromMatch );
+
+//   //segment
+//   recoMuons->Branch("trkSegIsArb", &trkSegIsArb);
+//   recoMuons->Branch("trkSegX"    , &trkSegX    );
+//   recoMuons->Branch("trkSegY"    , &trkSegY    );
+//   recoMuons->Branch("trkSegZ"    , &trkSegZ    );
+//   recoMuons->Branch("trkSegR"    , &trkSegR    );
+//   recoMuons->Branch("trkSegPhi"  , &trkSegPhi  );
+//  recoMuons->Branch("trkSegEta"  , &trkSegEta  );
 
   //---------------------------------------------------------------------
   // RECHIT information: only for standalone/global muons!
@@ -264,16 +294,27 @@ TrigEff::TrigEff(const edm::ParameterSet& pset):edm::EDAnalyzer(){
   recoMuons->Branch("rchChamber", &rchChamber);
   recoMuons->Branch("rchRing"   , &rchRing   );
   recoMuons->Branch("rchLayer"  , &rchLayer  );
-   
+
   recoMuons->Branch("rchMuonSize",      &rchMuonSize     );
-  recoMuons->Branch("rchEtaMatrix"    , &rchEtaMatrix    );
-  recoMuons->Branch("rchPhiMatrix"    , &rchPhiMatrix    );
-  recoMuons->Branch("rchPhi02PIMatrix", &rchPhi02PIMatrix);
-  recoMuons->Branch("rchStationMatrix", &rchStationMatrix);
-  recoMuons->Branch("rchChamberMatrix", &rchChamberMatrix);
-  recoMuons->Branch("rchRingMatrix"   , &rchRingMatrix   );
-  recoMuons->Branch("rchLayerMatrix"  , &rchLayerMatrix  );
-  recoMuons->Branch("rchTypeMatrix"   , &rchTypeMatrix   );
+ 
+  recoMuons->Branch("rchEtaMatrix"    , rchEtaMatrix    , "rchEtaMatrix[muonSize][35]/F");
+  recoMuons->Branch("rchPhiMatrix"    , rchPhiMatrix    , "rchPhiMatrix[muonSize][35]/F");
+  recoMuons->Branch("rchPhi02PIMatrix", rchPhi02PIMatrix, "rchPhi02PIMatrix[muonSize][35]/F");
+  recoMuons->Branch("rchStationMatrix", rchStationMatrix, "rchStationMatrix[muonSize][35]/I");
+  recoMuons->Branch("rchChamberMatrix", rchChamberMatrix, "rchChamberMatrix[muonSize][35]/I");
+  recoMuons->Branch("rchRingMatrix"   , rchRingMatrix   , "rchRingMatrix[muonSize][35]/I");
+  recoMuons->Branch("rchLayerMatrix"  , rchLayerMatrix  , "rchLayerMatrix[muonSize][35]/I");
+  recoMuons->Branch("rchTypeMatrix"   , rchTypeMatrix   , "rchTypeMatrix[muonSize][35]/I");
+   
+//   recoMuons->Branch("rchMuonSize",      &rchMuonSize     );
+//   recoMuons->Branch("rchEtaMatrix"    , &rchEtaMatrix    );
+//   recoMuons->Branch("rchPhiMatrix"    , &rchPhiMatrix    );
+//   recoMuons->Branch("rchPhi02PIMatrix", &rchPhi02PIMatrix);
+//   recoMuons->Branch("rchStationMatrix", &rchStationMatrix);
+//   recoMuons->Branch("rchChamberMatrix", &rchChamberMatrix);
+//   recoMuons->Branch("rchRingMatrix"   , &rchRingMatrix   );
+//   recoMuons->Branch("rchLayerMatrix"  , &rchLayerMatrix  );
+//   recoMuons->Branch("rchTypeMatrix"   , &rchTypeMatrix   );
    
   //--------------------------------------------------------------------- 
   // old format: keep it until you are sure the TMatrixF works
@@ -290,56 +331,84 @@ TrigEff::TrigEff(const edm::ParameterSet& pset):edm::EDAnalyzer(){
   // Propagation block booking
   //---------------------------------------------------------------------
   // propagation to ME1/1
-  recoMuons->Branch(  "muons_x_mep11",  &muons_x_mep11);
-  recoMuons->Branch(  "muons_y_mep11",  &muons_y_mep11);
-  recoMuons->Branch(  "muons_z_mep11",  &muons_z_mep11);
-  recoMuons->Branch("muons_phi_mep11",&muons_phi_mep11);
-  recoMuons->Branch("muons_eta_mep11",&muons_eta_mep11);
-
-  recoMuons->Branch(  "muons_x_mem11",  &muons_x_mem11);
-  recoMuons->Branch(  "muons_y_mem11",  &muons_y_mem11);
-  recoMuons->Branch(  "muons_z_mem11",  &muons_z_mem11);
-  recoMuons->Branch("muons_phi_mem11",&muons_phi_mem11);
-  recoMuons->Branch("muons_eta_mem11",&muons_eta_mem11);
+  recoMuons->Branch(  "muons_x_me11",  &muons_x_me11);
+  recoMuons->Branch(  "muons_y_me11",  &muons_y_me11);
+  recoMuons->Branch(  "muons_z_me11",  &muons_z_me11);
+  recoMuons->Branch("muons_phi_me11",&muons_phi_me11);
+  recoMuons->Branch("muons_eta_me11",&muons_eta_me11);
 
   // propagation to ME1
-  recoMuons->Branch(  "muons_x_mep1",  &muons_x_mep1);
-  recoMuons->Branch(  "muons_y_mep1",  &muons_y_mep1);
-  recoMuons->Branch(  "muons_z_mep1",  &muons_z_mep1);
-  recoMuons->Branch("muons_phi_mep1",&muons_phi_mep1);
-  recoMuons->Branch("muons_eta_mep1",&muons_eta_mep1);
-
-  recoMuons->Branch(  "muons_x_mem1",  &muons_x_mem1);
-  recoMuons->Branch(  "muons_y_mem1",  &muons_y_mem1);
-  recoMuons->Branch(  "muons_z_mem1",  &muons_z_mem1);
-  recoMuons->Branch("muons_phi_mem1",&muons_phi_mem1);
-  recoMuons->Branch("muons_eta_mem1",&muons_eta_mem1);
+  recoMuons->Branch(  "muons_x_me1",  &muons_x_me1);
+  recoMuons->Branch(  "muons_y_me1",  &muons_y_me1);
+  recoMuons->Branch(  "muons_z_me1",  &muons_z_me1);
+  recoMuons->Branch("muons_phi_me1",&muons_phi_me1);
+  recoMuons->Branch("muons_eta_me1",&muons_eta_me1);
 
   // propagation to ME2
-  recoMuons->Branch(  "muons_x_mep2",  &muons_x_mep2);
-  recoMuons->Branch(  "muons_y_mep2",  &muons_y_mep2);
-  recoMuons->Branch(  "muons_z_mep2",  &muons_z_mep2);
-  recoMuons->Branch("muons_phi_mep2",&muons_phi_mep2);
-  recoMuons->Branch("muons_eta_mep2",&muons_eta_mep2);
+  recoMuons->Branch(  "muons_x_me2",  &muons_x_me2);
+  recoMuons->Branch(  "muons_y_me2",  &muons_y_me2);
+  recoMuons->Branch(  "muons_z_me2",  &muons_z_me2);
+  recoMuons->Branch("muons_phi_me2",&muons_phi_me2);
+  recoMuons->Branch("muons_eta_me2",&muons_eta_me2);
 
-  recoMuons->Branch(  "muons_x_mem2",  &muons_x_mem2);
-  recoMuons->Branch(  "muons_y_mem2",  &muons_y_mem2);
-  recoMuons->Branch(  "muons_z_mem2",  &muons_z_mem2);
-  recoMuons->Branch("muons_phi_mem2",&muons_phi_mem2);
-  recoMuons->Branch("muons_eta_mem2",&muons_eta_mem2);
-   
   // propagation to ME3
-  recoMuons->Branch(  "muons_x_mep3",  &muons_x_mep3);
-  recoMuons->Branch(  "muons_y_mep3",  &muons_y_mep3);
-  recoMuons->Branch(  "muons_z_mep3",  &muons_z_mep3);
-  recoMuons->Branch("muons_phi_mep3",&muons_phi_mep3);
-  recoMuons->Branch("muons_eta_mep3",&muons_eta_mep3);
+  recoMuons->Branch(  "muons_x_me3",  &muons_x_me3);
+  recoMuons->Branch(  "muons_y_me3",  &muons_y_me3);
+  recoMuons->Branch(  "muons_z_me3",  &muons_z_me3);
+  recoMuons->Branch("muons_phi_me3",&muons_phi_me3);
+  recoMuons->Branch("muons_eta_me3",&muons_eta_me3);
    
-  recoMuons->Branch(  "muons_x_mem3",  &muons_x_mem3);
-  recoMuons->Branch(  "muons_y_mem3",  &muons_y_mem3);
-  recoMuons->Branch(  "muons_z_mem3",  &muons_z_mem3);
-  recoMuons->Branch("muons_phi_mem3",&muons_phi_mem3);
-  recoMuons->Branch("muons_eta_mem3",&muons_eta_mem3);
+//   // propagation to ME1/1
+//   recoMuons->Branch(  "muons_x_mep11",  &muons_x_mep11);
+//   recoMuons->Branch(  "muons_y_mep11",  &muons_y_mep11);
+//   recoMuons->Branch(  "muons_z_mep11",  &muons_z_mep11);
+//   recoMuons->Branch("muons_phi_mep11",&muons_phi_mep11);
+//   recoMuons->Branch("muons_eta_mep11",&muons_eta_mep11);
+
+//   recoMuons->Branch(  "muons_x_mem11",  &muons_x_mem11);
+//   recoMuons->Branch(  "muons_y_mem11",  &muons_y_mem11);
+//   recoMuons->Branch(  "muons_z_mem11",  &muons_z_mem11);
+//   recoMuons->Branch("muons_phi_mem11",&muons_phi_mem11);
+//   recoMuons->Branch("muons_eta_mem11",&muons_eta_mem11);
+
+//   // propagation to ME1
+//   recoMuons->Branch(  "muons_x_mep1",  &muons_x_mep1);
+//   recoMuons->Branch(  "muons_y_mep1",  &muons_y_mep1);
+//   recoMuons->Branch(  "muons_z_mep1",  &muons_z_mep1);
+//   recoMuons->Branch("muons_phi_mep1",&muons_phi_mep1);
+//   recoMuons->Branch("muons_eta_mep1",&muons_eta_mep1);
+
+//   recoMuons->Branch(  "muons_x_mem1",  &muons_x_mem1);
+//   recoMuons->Branch(  "muons_y_mem1",  &muons_y_mem1);
+//   recoMuons->Branch(  "muons_z_mem1",  &muons_z_mem1);
+//   recoMuons->Branch("muons_phi_mem1",&muons_phi_mem1);
+//   recoMuons->Branch("muons_eta_mem1",&muons_eta_mem1);
+
+//   // propagation to ME2
+//   recoMuons->Branch(  "muons_x_mep2",  &muons_x_mep2);
+//   recoMuons->Branch(  "muons_y_mep2",  &muons_y_mep2);
+//   recoMuons->Branch(  "muons_z_mep2",  &muons_z_mep2);
+//   recoMuons->Branch("muons_phi_mep2",&muons_phi_mep2);
+//   recoMuons->Branch("muons_eta_mep2",&muons_eta_mep2);
+
+//   recoMuons->Branch(  "muons_x_mem2",  &muons_x_mem2);
+//   recoMuons->Branch(  "muons_y_mem2",  &muons_y_mem2);
+//   recoMuons->Branch(  "muons_z_mem2",  &muons_z_mem2);
+//   recoMuons->Branch("muons_phi_mem2",&muons_phi_mem2);
+//   recoMuons->Branch("muons_eta_mem2",&muons_eta_mem2);
+   
+//   // propagation to ME3
+//   recoMuons->Branch(  "muons_x_mep3",  &muons_x_mep3);
+//   recoMuons->Branch(  "muons_y_mep3",  &muons_y_mep3);
+//   recoMuons->Branch(  "muons_z_mep3",  &muons_z_mep3);
+//   recoMuons->Branch("muons_phi_mep3",&muons_phi_mep3);
+//   recoMuons->Branch("muons_eta_mep3",&muons_eta_mep3);
+   
+//   recoMuons->Branch(  "muons_x_mem3",  &muons_x_mem3);
+//   recoMuons->Branch(  "muons_y_mem3",  &muons_y_mem3);
+//   recoMuons->Branch(  "muons_z_mem3",  &muons_z_mem3);
+//   recoMuons->Branch("muons_phi_mem3",&muons_phi_mem3);
+//   recoMuons->Branch("muons_eta_mem3",&muons_eta_mem3);
   //---------------------------------------------------------------------
 
    
@@ -389,26 +458,44 @@ TrigEff::TrigEff(const edm::ParameterSet& pset):edm::EDAnalyzer(){
   csctfTTree->Branch("PhiBitTrk"     , &PhiBitTrk     );
   csctfTTree->Branch("PtBitTrk"      , &PtBitTrk      );
 
-  csctfTTree->Branch("NumLCTsTrk"        , &NumLCTsTrk    );
-  csctfTTree->Branch("trLctEndcap"       , &trLctEndcap   );
-  csctfTTree->Branch("trLctSector"       , &trLctSector   );
-  csctfTTree->Branch("trLctSubSector"    , &trLctSubSector);
-  csctfTTree->Branch("trLctBx"           , &trLctBx       );
-  csctfTTree->Branch("trLctBx0"          , &trLctBx0      );
-                                                                  
-  csctfTTree->Branch("trLctStation"     , &trLctStation     );
-  csctfTTree->Branch("trLctRing"        , &trLctRing        );
-  csctfTTree->Branch("trLctChamber"     , &trLctChamber     );
-  csctfTTree->Branch("trLctTriggerCSCID", &trLctTriggerCSCID);
-  csctfTTree->Branch("trLctFpga"        , &trLctFpga        );
-                                                                     
-  csctfTTree->Branch("trLctlocalPhi"    , &trLctlocalPhi    );
-  csctfTTree->Branch("trLctglobalPhi"   , &trLctglobalPhi   );
-  csctfTTree->Branch("trLctglobalEta"   , &trLctglobalEta   );
-                                                                  
-  csctfTTree->Branch("trLctstripNum"    , &trLctstripNum    );
-  csctfTTree->Branch("trLctwireGroup"   , &trLctwireGroup   );
+  csctfTTree->Branch("NumLCTsTrk"       , &NumLCTsTrk       );
 
+  csctfTTree->Branch("trLctEndcap"      , trLctEndcap      , "trLctEndcap[SizeTrk][4]");
+  csctfTTree->Branch("trLctSector"      , trLctSector      , "trLctSector[SizeTrk][4]");
+  csctfTTree->Branch("trLctSubSector"   , trLctSubSector   , "trLctSubSector[SizeTrk][4]");
+  csctfTTree->Branch("trLctBx"          , trLctBx          , "trLctBx[SizeTrk][4]");
+  csctfTTree->Branch("trLctBx0"         , trLctBx0         , "trLctBx0[SizeTrk][4]");
+                                                                                     
+  csctfTTree->Branch("trLctStation"     , trLctStation     , "trLctStation[SizeTrk][4]");
+  csctfTTree->Branch("trLctRing"        , trLctRing        , "trLctRing[SizeTrk][4]");
+  csctfTTree->Branch("trLctChamber"     , trLctChamber     , "trLctChamber[SizeTrk][4]");
+  csctfTTree->Branch("trLctTriggerCSCID", trLctTriggerCSCID, "trLctTriggerCSCID[SizeTrk][4]");
+  csctfTTree->Branch("trLctFpga"        , trLctFpga        , "trLctFpga[SizeTrk][4]");
+                                                                                     
+  csctfTTree->Branch("trLctlocalPhi"    , trLctlocalPhi    , "trLctlocalPhi[SizeTrk][4]");
+  csctfTTree->Branch("trLctglobalPhi"   , trLctglobalPhi   , "trLctglobalPhi[SizeTrk][4]");
+  csctfTTree->Branch("trLctglobalEta"   , trLctglobalEta   , "trLctglobalEta[SizeTrk][4]");
+                                                                                  
+  csctfTTree->Branch("trLctstripNum"    , trLctstripNum    , "trLctstripNum[SizeTrk][4]");
+  csctfTTree->Branch("trLctwireGroup"   , trLctwireGroup   , "trLctwireGroup[SizeTrk][4]");
+
+  // all lcts
+  csctfTTree->Branch("SizeLCTs"       , &SizeLCTs       ,"SizeLCTs/I");
+  csctfTTree->Branch("lctEndcap"      , &lctEndcap      );
+  csctfTTree->Branch("lctSector"      , &lctSector      );
+  csctfTTree->Branch("lctSubSector"   , &lctSubSector   );
+  csctfTTree->Branch("lctBx"          , &lctBx          );
+  csctfTTree->Branch("lctBx0"         , &lctBx0         );
+  csctfTTree->Branch("lctStation"     , &lctStation     );
+  csctfTTree->Branch("lctRing"        , &lctRing        );
+  csctfTTree->Branch("lctChamber"     , &lctChamber     );
+  csctfTTree->Branch("lctTriggerCSCID", &lctTriggerCSCID);
+  csctfTTree->Branch("lctFpga"        , &lctFpga        );
+  csctfTTree->Branch("lctlocalPhi"    , &lctlocalPhi    );
+  csctfTTree->Branch("lctglobalPhi"   , &lctglobalPhi   );
+  csctfTTree->Branch("lctglobalEta"   , &lctglobalEta   );
+  csctfTTree->Branch("lctstripNum"    , &lctstripNum    );
+  csctfTTree->Branch("lctwireGroup"   , &lctwireGroup   );
 
   // -----------------------------------------------------------------------------
   // csctf does not preserve information about the LCT (stubs) which forms
@@ -452,22 +539,26 @@ TrigEff::TrigEff(const edm::ParameterSet& pset):edm::EDAnalyzer(){
     }
   // -----------------------------------------------------------------------------
   
+  edm::ParameterSet serviceParameters = pset.getParameter<edm::ParameterSet>("ServiceParameters");
+  theService = new MuonServiceProxy(serviceParameters);
+
 }
 
-// destructor
-TrigEff::~TrigEff(void){ 
-
-  file->Write(); 
-  file->Close(); 
-
+void TrigEff::endJob() {
   //free the CSCTF array of pointers
   for(int j=0; j<2; j++) 
     for(int i=0; i<5; i++) 
       delete srLUTs_[i][j]; 
   
-  delete ts;
-  delete tpts;
+  // delete ts;
+  // delete tpts;
+}
 
+
+// destructor
+TrigEff::~TrigEff(void){ 
+  file->Write(); 
+  file->Close(); 
 }
 
 // analyze
@@ -492,11 +583,11 @@ void TrigEff::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup){
 //       cout<<"Empty generator collection ... skipping"<<endl; 
 //   }
 
-  
   //Get the Magnetic field from the setup
   iSetup.get<IdealMagneticFieldRecord>().get(theBField);
   // Get the GlobalTrackingGeometry from the setup
   iSetup.get<GlobalTrackingGeometryRecord>().get(theTrackingGeometry);
+  theService->update(iSetup);
 
   // Get the propagators
   iSetup.get<TrackingComponentsRecord>().get("SmartPropagatorAnyRK", propagatorAlong   );
@@ -607,6 +698,22 @@ void TrigEff::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup){
               ts,
               tpts,
               srLUTs_);
+
+    Handle<CSCCorrelatedLCTDigiCollection> CSCTFlcts;
+    if( csctfLctsTag.label() != "null" ) {
+      iEvent.getByLabel(csctfLctsTag, CSCTFlcts);
+      if (printLevel > 0) cout<<"========== FILLING ALL LCTS RAW  ==========\n";
+    }
+
+    if( CSCTFlcts.isValid() ) {
+      //fill all the LCTs csctf information
+      fillAllLCTs(CSCTFlcts, srLUTs_);
+    }
+    else
+      cout << "Invalid CSCCorrelatedLCTDigiCollection... skipping it\n";
+
+    
+    // fill the ttree
     csctfTTree->Fill();
 
     //clean-up the pointers
@@ -928,10 +1035,217 @@ void TrigEff::fillMuons(const edm::Handle<reco::MuonCollection> muons)
         muon->track         ().isNonnull()  )    trackRef = muon->track();
     else if (muon->standAloneMuon().isNonnull()) trackRef = muon->standAloneMuon();
 
+    
+    // z planes
+    int endcapPlane=0;
+    if (trackRef->eta() > 0) endcapPlane=1; 
+    if (trackRef->eta() < 0) endcapPlane=-1; 
+
+    float zzPlaneME11 = endcapPlane*585;  
+    float zzPlaneME1  = endcapPlane*615;  
+    float zzPlaneME2  = endcapPlane*830;  
+    float zzPlaneME3  = endcapPlane*935;  
 
     // ... to ME1/1
-    // track at ME+1/1 surface, 5.9 m - extrapolation
-    tsos = surfExtrapTrkSam(trackRef, 590);  
+    // track at ME1/1 surface, +/-5.85 m - extrapolation
+    tsos = surfExtrapTrkSam(trackRef, zzPlaneME11);  
+    if (tsos.isValid()) {
+      double xx = tsos.globalPosition().x();
+      double yy = tsos.globalPosition().y();
+      double zz = tsos.globalPosition().z();
+      
+      muons_x_me11->push_back(xx);	
+      muons_y_me11->push_back(yy);	
+      muons_z_me11->push_back(zz);	
+
+      double rr = sqrt(xx*xx + yy*yy);
+      double cosphi = xx/rr;
+      
+      if (yy>=0) muons_phi_me11->push_back(acos(cosphi));
+      else       muons_phi_me11->push_back(2*PI-acos(cosphi));
+
+    
+      double abspseta = -log( tan( atan(fabs(rr/zz))/2.0 ) );
+      if (zz>=0) muons_eta_me11->push_back(abspseta);
+      else       muons_eta_me11->push_back(-abspseta);
+
+      if (printLevel>0) {
+        cout<<"I am projection the track to the ME";
+        if (endcapPlane>0) cout << "+";
+        if (endcapPlane<0) cout << "-";
+        cout<< "1/1 surface" << endl;
+        cout<< "zzPlaneM11=" << zzPlaneME11 << endl;
+
+        cout << "muons_x_me11:" << xx << endl;
+        cout << "muons_y_me11:" << yy << endl;
+        cout << "muons_z_me11:" << zz << endl;      
+
+        if (yy>=0) cout << "muons_phi_me11:" << acos(cosphi) << endl;
+        else       cout << "muons_phi_me11:" << 2*PI-acos(cosphi) << endl;        
+        if (zz>=0) cout << "muons_eta_me11:" <<  abspseta << endl;
+        else       cout << "muons_eta_me11:" << -abspseta << endl;
+      }
+    }
+    else {
+      if (printLevel>0) cout << "extrapolation to ME1/1 NOT valid\n";
+      muons_x_me11->push_back(-999);	
+      muons_y_me11->push_back(-999);	
+      muons_z_me11->push_back(-999);	
+      muons_phi_me11->push_back(-999);
+      muons_eta_me11->push_back(-999);
+    }
+
+
+    // ... to ME1
+    // track at ME1 surface, +/-6.15 m - extrapolation
+    tsos = surfExtrapTrkSam(trackRef, zzPlaneME1);  
+    if (tsos.isValid()) {
+      double xx = tsos.globalPosition().x();
+      double yy = tsos.globalPosition().y();
+      double zz = tsos.globalPosition().z();
+      
+      muons_x_me1->push_back(xx);	
+      muons_y_me1->push_back(yy);	
+      muons_z_me1->push_back(zz);	
+
+      double rr = sqrt(xx*xx + yy*yy);
+      double cosphi = xx/rr;
+      
+      if (yy>=0) muons_phi_me1->push_back(acos(cosphi));
+      else       muons_phi_me1->push_back(2*PI-acos(cosphi));
+
+    
+      double abspseta = -log( tan( atan(fabs(rr/zz))/2.0 ) );
+      if (zz>=0) muons_eta_me1->push_back(abspseta);
+      else       muons_eta_me1->push_back(-abspseta);
+
+      if (printLevel>0) {
+          cout<<"I am projection the track to the ME";
+        if (endcapPlane>0) cout << "+";
+        if (endcapPlane<0) cout << "-";
+        cout<< "1 surface" << endl;
+        cout<< "zzPlaneM1=" << zzPlaneME1 << endl;
+
+        cout << "muons_x_me1:" << xx << endl;
+        cout << "muons_y_me1:" << yy << endl;
+        cout << "muons_z_me1:" << zz << endl;      
+        if (yy>=0) cout << "muons_phi_me1:" << acos(cosphi) << endl;
+        else       cout << "muons_phi_me1:" << 2*PI-acos(cosphi) << endl;        
+        if (zz>=0) cout << "muons_eta_me1:" <<  abspseta << endl;
+        else       cout << "muons_eta_me1:" << -abspseta << endl;
+      }
+    }
+    else {
+      if (printLevel>0) cout << "extrapolation to ME1 NOT valid\n";
+      muons_x_me1->push_back(-999);	
+      muons_y_me1->push_back(-999);	
+      muons_z_me1->push_back(-999);	
+      muons_phi_me1->push_back(-999);
+      muons_eta_me1->push_back(-999);
+    }
+
+
+    // ... to ME2
+    // track at ME2 surface, +/-8.30 m - extrapolation
+    tsos = surfExtrapTrkSam(trackRef, zzPlaneME2);  
+    if (tsos.isValid()) {
+      double xx = tsos.globalPosition().x();
+      double yy = tsos.globalPosition().y();
+      double zz = tsos.globalPosition().z();
+      
+      muons_x_me2->push_back(xx);	
+      muons_y_me2->push_back(yy);	
+      muons_z_me2->push_back(zz);	
+
+      double rr = sqrt(xx*xx + yy*yy);
+      double cosphi = xx/rr;
+      
+      if (yy>=0) muons_phi_me2->push_back(acos(cosphi));
+      else       muons_phi_me2->push_back(2*PI-acos(cosphi));
+
+    
+      double abspseta = -log( tan( atan(fabs(rr/zz))/2.0 ) );
+      if (zz>=0) muons_eta_me2->push_back(abspseta);
+      else       muons_eta_me2->push_back(-abspseta);
+
+      if (printLevel>0) {
+        cout<<"I am projection the track to the ME";
+        if (endcapPlane>0) cout << "+";
+        if (endcapPlane<0) cout << "-";
+        cout<< "2 surface" << endl;
+        cout<< "zzPlaneM2=" << zzPlaneME2 << endl;
+        
+        cout << "muons_x_me2:" << xx << endl;
+        cout << "muons_y_me2:" << yy << endl;
+        cout << "muons_z_me2:" << zz << endl;      
+        if (yy>=0) cout << "muons_phi_me2:" << acos(cosphi) << endl;
+        else       cout << "muons_phi_me2:" << 2*PI-acos(cosphi) << endl;        
+        if (zz>=0) cout << "muons_eta_me2:" << abspseta << endl;
+        else       cout << "muons_eta_me2:" << -abspseta << endl;
+      }
+    }
+    else {
+      if (printLevel>0) cout << "extrapolation to ME2 NOT valid\n";
+      muons_x_me2->push_back(-999);	
+      muons_y_me2->push_back(-999);	
+      muons_z_me2->push_back(-999);	
+      muons_phi_me2->push_back(-999);
+      muons_eta_me2->push_back(-999);
+    }
+    
+    // ... to ME3
+    // track at ME3 surface, +/-9.35 m - extrapolation
+    tsos = surfExtrapTrkSam(trackRef, zzPlaneME3);  
+    if (tsos.isValid()) {
+      double xx = tsos.globalPosition().x();
+      double yy = tsos.globalPosition().y();
+      double zz = tsos.globalPosition().z();
+      
+      muons_x_me3->push_back(xx);	
+      muons_y_me3->push_back(yy);	
+      muons_z_me3->push_back(zz);	
+      
+      double rr = sqrt(xx*xx + yy*yy);
+      double cosphi = xx/rr;
+      
+      if (yy>=0) muons_phi_me3->push_back(acos(cosphi));
+      else       muons_phi_me3->push_back(2*PI-acos(cosphi));
+      
+      
+      double abspseta = -log( tan( atan(fabs(rr/zz))/2.0 ) );
+      if (zz>=0) muons_eta_me3->push_back(abspseta);
+      else       muons_eta_me3->push_back(-abspseta);
+      
+      if (printLevel>0) {
+        cout<<"I am projection the track to the ME";
+        if (endcapPlane>0) cout << "+";
+        if (endcapPlane<0) cout << "-";
+        cout<< "3 surface" << endl;
+        cout<< "zzPlaneM3=" << zzPlaneME3 << endl;
+                
+        cout << "muons_x_me3:" << xx << endl;
+        cout << "muons_y_me3:" << yy << endl;
+        cout << "muons_z_me3:" << zz << endl;      
+        if (yy>=0) cout << "muons_phi_me3:" << acos(cosphi) << endl;
+        else       cout << "muons_phi_me3:" << 2*PI-acos(cosphi) << endl;        
+        if (zz>=0) cout << "muons_eta_me3:" << abspseta << endl;
+        else       cout << "muons_eta_me3:" << -abspseta << endl;
+      }
+    }
+    else {
+      if (printLevel>0) cout << "extrapolation to ME3 NOT valid\n";
+      muons_x_me3->push_back(-999);	
+      muons_y_me3->push_back(-999);	
+      muons_z_me3->push_back(-999);	
+      muons_phi_me3->push_back(-999);
+      muons_eta_me3->push_back(-999);
+    }
+    
+
+    /*
+    // ... to ME1/1
+    // track at ME+1/1 surface, 5.85 m - extrapolation
+    tsos = surfExtrapTrkSam(trackRef, 585);  
     if (tsos.isValid()) {
       double xx = tsos.globalPosition().x();
       double yy = tsos.globalPosition().y();
@@ -965,8 +1279,8 @@ void TrigEff::fillMuons(const edm::Handle<reco::MuonCollection> muons)
       
     }
 
-    // track at ME-1/1 surface, -5.9 m - extrapolation
-    tsos = surfExtrapTrkSam(trackRef, -590);  
+    // track at ME-1/1 surface, -5.85 m - extrapolation
+    tsos = surfExtrapTrkSam(trackRef, -585);  
     if (tsos.isValid()) {
       double xx = tsos.globalPosition().x();
       double yy = tsos.globalPosition().y();
@@ -1001,8 +1315,8 @@ void TrigEff::fillMuons(const edm::Handle<reco::MuonCollection> muons)
     }
     
     // ... to ME1
-    // track at ME+1 surface, 7.1 m - extrapolation
-    tsos = surfExtrapTrkSam(trackRef, 710);  
+    // track at ME+1 surface, 6.15 m - extrapolation
+    tsos = surfExtrapTrkSam(trackRef, 615);  
     if (tsos.isValid()) {
       double xx = tsos.globalPosition().x();
       double yy = tsos.globalPosition().y();
@@ -1037,7 +1351,7 @@ void TrigEff::fillMuons(const edm::Handle<reco::MuonCollection> muons)
     }
 
     // track at ME-1 surface, -7.1 m - extrapolation
-    tsos = surfExtrapTrkSam(trackRef, -710);  
+    tsos = surfExtrapTrkSam(trackRef, -615);  
     if (tsos.isValid()) {
       double xx = tsos.globalPosition().x();
       double yy = tsos.globalPosition().y();
@@ -1073,8 +1387,8 @@ void TrigEff::fillMuons(const edm::Handle<reco::MuonCollection> muons)
 
 
     // ... to ME2
-    // track at ME+2 surface, 8.5 m - extrapolation
-    tsos = surfExtrapTrkSam(trackRef, 850);  
+    // track at ME+2 surface, 8.30 m - extrapolation
+    tsos = surfExtrapTrkSam(trackRef, 830);  
     if (tsos.isValid()) {
       double xx = tsos.globalPosition().x();
       double yy = tsos.globalPosition().y();
@@ -1108,8 +1422,8 @@ void TrigEff::fillMuons(const edm::Handle<reco::MuonCollection> muons)
       
     }
 
-    // track at ME-2 surface, -8.5 m - extrapolation
-    tsos = surfExtrapTrkSam(trackRef, -850);  
+    // track at ME-2 surface, -8.3 m - extrapolation
+    tsos = surfExtrapTrkSam(trackRef, -830);  
     if (tsos.isValid()) {
       double xx = tsos.globalPosition().x();
       double yy = tsos.globalPosition().y();
@@ -1145,8 +1459,8 @@ void TrigEff::fillMuons(const edm::Handle<reco::MuonCollection> muons)
 
 
     // ... to ME3
-    // track at ME+3 surface, 9.7 m - extrapolation
-    tsos = surfExtrapTrkSam(trackRef, 970);  
+    // track at ME+3 surface, 9.35 m - extrapolation
+    tsos = surfExtrapTrkSam(trackRef, 935);  
     if (tsos.isValid()) {
       double xx = tsos.globalPosition().x();
       double yy = tsos.globalPosition().y();
@@ -1155,20 +1469,20 @@ void TrigEff::fillMuons(const edm::Handle<reco::MuonCollection> muons)
       muons_x_mep3->push_back(xx);	
       muons_y_mep3->push_back(yy);	
       muons_z_mep3->push_back(zz);	
-
+      
       double rr = sqrt(xx*xx + yy*yy);
       double cosphi = xx/rr;
       
       if (yy>=0) muons_phi_mep3->push_back(acos(cosphi));
       else       muons_phi_mep3->push_back(2*PI-acos(cosphi));
-
-    
+      
+      
       double abspseta = -log( tan( atan(fabs(rr/zz))/2.0 ) );
       if (zz>=0) muons_eta_mep3->push_back(abspseta);
       else       muons_eta_mep3->push_back(-abspseta);
-
+      
       if (printLevel>0) {
-        cout<<"I am projection the track to the ME+2 surface" << endl;
+        cout<<"I am projection the track to the ME+3 surface" << endl;
         cout << "muons_x_mep3:" << xx << endl;
         cout << "muons_y_mep3:" << yy << endl;
         cout << "muons_z_mep3:" << zz << endl;      
@@ -1179,9 +1493,9 @@ void TrigEff::fillMuons(const edm::Handle<reco::MuonCollection> muons)
       }
       
     }
-
-    // track at ME-3 surface, -9.7 m - extrapolation
-    tsos = surfExtrapTrkSam(trackRef, -970);  
+    
+    // track at ME-3 surface, -9.35 m - extrapolation
+    tsos = surfExtrapTrkSam(trackRef, -935);  
     if (tsos.isValid()) {
       double xx = tsos.globalPosition().x();
       double yy = tsos.globalPosition().y();
@@ -1203,7 +1517,7 @@ void TrigEff::fillMuons(const edm::Handle<reco::MuonCollection> muons)
       else       muons_eta_mem3->push_back(-abspseta);
 
       if (printLevel>0) {
-        cout<<"I am projection the track to the ME+2 surface" << endl;
+        cout<<"I am projection the track to the ME-3 surface" << endl;
         cout << "muons_x_mem3:" << xx << endl;
         cout << "muons_y_mem3:" << yy << endl;
         cout << "muons_z_mem3:" << zz << endl;      
@@ -1214,6 +1528,7 @@ void TrigEff::fillMuons(const edm::Handle<reco::MuonCollection> muons)
       }
       
     }
+    */
     
     //---------------------------------------------------------------------
     // RECHIT information in CSC: only for standalone/global muons!
@@ -1264,6 +1579,14 @@ void TrigEff::fillMuons(const edm::Handle<reco::MuonCollection> muons)
         const CSCRecHit2D* CSChit =dynamic_cast<const CSCRecHit2D*>(&**hit);
         
         LocalPoint rhitlocal = CSChit->localPosition();
+
+        // for debugging purpouses
+        //if (printLevel > 0) {
+        //  cout << "rhitlocal.x="<<rhitlocal.x();
+        //  cout << "rhitlocal.y="<<rhitlocal.y();
+        //  cout << "rhitlocal.z="<<rhitlocal.z();
+        //}
+
         GlobalPoint gp = GlobalPoint(0.0, 0.0, 0.0);
         
         const CSCChamber* cscchamber = cscGeom->chamber(id);
@@ -1293,6 +1616,9 @@ void TrigEff::fillMuons(const edm::Handle<reco::MuonCollection> muons)
                <<      " RCH Eta: "         << gp.eta()	    
                <<      " RCH Phi: "         << gp.phi()
                <<      " RCH Phi [0,2PI]: " << phi02PI 
+               <<      " RCH X: " << gp.x()  
+               <<      " RCH Y: " << gp.y()  
+               <<      " RCH Z: " << gp.z()  
                << endl;
         }
         
@@ -1423,12 +1749,24 @@ void TrigEff::fillMuons(const edm::Handle<reco::MuonCollection> muons)
           int triggerSector = cscId.triggerSector();
           int triggerCscId  = cscId.triggerCscId();
           
-          float xx = chamber->x;
-          float yy = chamber->y;
+          /* original coordinates are local to the chamber
+            float xx = chamber->x;
+            float yy = chamber->y;
+          */
+
+          GlobalPoint gpChb = theService->trackingGeometry()->idToDet(cscId)->surface().toGlobal(LocalPoint(chamber->x,chamber->y,0));
           
+          float xx = gpChb.x();
+          float yy = gpChb.y();
+          float zz = gpChb.z();
+        
           float rr = sqrt(xx*xx + yy*yy);
-          float cosphi = xx/rr;
-          
+          float phi = gpChb.phi();
+          if (phi < 0   ) phi += 2*PI;
+          if (phi > 2*PI) phi -= 2*PI;
+          float eta = gpChb.eta();
+
+
           //look at the segments
           for ( std::vector<reco::MuonSegmentMatch>::const_iterator segment = chamber->segmentMatches.begin();
                 segment != chamber->segmentMatches.end(); ++segment ){
@@ -1439,14 +1777,26 @@ void TrigEff::fillMuons(const edm::Handle<reco::MuonCollection> muons)
 
             if (!segIsArb) continue;
 
-            float segX=segment->x;
-            float segY=segment->y;
+            /* original coordinates are local to the chamber
+               float segX=segment->x;
+               float segY=segment->y;
+            */
+            
+            // global coordinates
+            GlobalPoint gpSeg = theService->trackingGeometry()->idToDet(cscId)->surface().toGlobal(LocalPoint(segment->x,segment->y,0));
+
+            float segX=gpSeg.x();
+            float segY=gpSeg.y();
+            float segZ=gpSeg.z();
             
             float segR = sqrt(segX*segX + segY*segY);
-            float segCosPhi = segX/segR;
-           
+            float segPhi = gpSeg.phi();
+            if (segPhi < 0   ) segPhi += 2*PI;
+            if (segPhi > 2*PI) segPhi -= 2*PI;
+            float segEta = gpSeg.eta();
+
             if (printLevel>0) {
-              cout << "###### IS CSC ########"             << endl;
+              cout << "###### IS CSC ########"                << endl;
               cout << "trkSegChamberId:"     << chamberId     << endl;
               cout << "trkSegRing:"          << ring          << endl;
               cout << "trkSegStation:"       << station       << endl;
@@ -1455,21 +1805,22 @@ void TrigEff::fillMuons(const edm::Handle<reco::MuonCollection> muons)
               cout << "trkSegTriggerCscId :" << triggerCscId  << endl;
             
               cout<< "trkSegXfromMatch:"     << xx   << endl;
-              cout<< "trkSegYfromMatch:"     << yy    << endl;
+              cout<< "trkSegYfromMatch:"     << yy   << endl;
+              cout<< "trkSegZfromMatch:"     << zz   << endl;
+              cout<< "trkSegRfromMatch:"     << rr   << endl;
               
-              if (yy>=0) cout << "trkSegPhifromMatch:" <<      acos(cosphi) << endl;
-              else       cout << "trkSegPhifromMatch:" << 2*PI-acos(cosphi) << endl;
-              
+              cout << "trkSegPhifromMatch:" << phi << endl;
+              cout << "trkSegEtafromMatch:" << eta << endl;
+
               cout << "SEGMENT:"                  << endl;
               cout << "trkSegIsArb: " << segIsArb << endl; 
               cout << "trkSegX: "     << segX     << endl; 
               cout << "trkSegY: "     << segY     << endl; 
+              cout << "trkSegZ: "     << segZ     << endl; 
+              cout << "trkSegR: "     << segR     << endl; 
               
-              cout << "segCosPhi:"       << segCosPhi       << endl;
-              cout << "acos(segCosPhi):" << acos(segCosPhi) << endl;
-              
-              if (segY>=0) cout << "trkSegPhi::" <<      acos(segCosPhi) << endl;
-              else         cout << "trkSegPhi::" << 2*PI-acos(segCosPhi) << endl;        
+              cout << "segPhi:"       << segPhi       << endl;
+              cout << "segEta:"       << segEta       << endl;
             }
             
             
@@ -1484,16 +1835,21 @@ void TrigEff::fillMuons(const edm::Handle<reco::MuonCollection> muons)
             
               trkSegXfromMatch[whichMuon][iSegment] = xx;
               trkSegYfromMatch[whichMuon][iSegment] = yy;
+              trkSegZfromMatch[whichMuon][iSegment] = zz;
+              trkSegRfromMatch[whichMuon][iSegment] = rr;
               
-              if (yy>=0) trkSegPhifromMatch[whichMuon][iSegment] =      acos(cosphi);
-              else       trkSegPhifromMatch[whichMuon][iSegment] = 2*PI-acos(cosphi);
+              trkSegPhifromMatch[whichMuon][iSegment] = phi;
+              trkSegEtafromMatch[whichMuon][iSegment] = eta;
+
               
               trkSegIsArb[whichMuon][iSegment]=segIsArb;
               trkSegX[whichMuon][iSegment]=segX;
               trkSegY[whichMuon][iSegment]=segY;
+              trkSegZ[whichMuon][iSegment]=segZ;
+              trkSegR[whichMuon][iSegment]=segR;
             
-              if (segY>0)trkSegPhi[whichMuon][iSegment]=     acos(segCosPhi);
-              else       trkSegPhi[whichMuon][iSegment]=2*PI-acos(segCosPhi);
+              trkSegPhi[whichMuon][iSegment]= segPhi;
+              trkSegEta[whichMuon][iSegment]= segEta;
             }         
             else
               cout << "ERROR: too many segment or muons "
@@ -1506,6 +1862,7 @@ void TrigEff::fillMuons(const edm::Handle<reco::MuonCollection> muons)
           }//end of segment loop 
           iChamber++;        
         }//end loop on the chambers
+        if (printLevel>0) cout << "trkNSegs="<<iSegment<<endl;
         trkNSegs->push_back(iSegment);
       }// is muon good?
       else trkNSegs->push_back(-999);
@@ -1639,23 +1996,29 @@ void TrigEff::muonsInit()
   trkIsMatchValid     = new vector<int>;
 
   trkNSegs            = new vector<int>;
-  trkSegChamberId.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
-  trkSegRing.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
-  trkSegStation.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
-  trkSegEndcap.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
-  trkSegTriggerSector.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
-  trkSegTriggerCscId.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
+  /*
+    trkSegChamberId.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
+    trkSegRing.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
+    trkSegStation.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
+    trkSegEndcap.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
+    trkSegTriggerSector.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
+    trkSegTriggerCscId.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
 
-  trkSegXfromMatch.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
-  trkSegYfromMatch.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
-  trkSegPhifromMatch.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
+    trkSegXfromMatch.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
+    trkSegYfromMatch.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
+    trkSegZfromMatch.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
+    trkSegRfromMatch.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
+    trkSegPhifromMatch.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
+    trkSegEtafromMatch.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
  
-  trkSegIsArb.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
-  trkSegX.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
-  trkSegY.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
-  trkSegR.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
-  trkSegPhi.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
-
+    trkSegIsArb.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
+    trkSegX.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
+    trkSegY.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
+    trkSegZ.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
+    trkSegR.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
+    trkSegPhi.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
+    trkSegEta.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
+  */
 
   for (int row=0; row < MAX_MUONS; row++) 
     for (int col=0; col < MAX_TRK_SEGS; col++) {
@@ -1668,13 +2031,18 @@ void TrigEff::muonsInit()
          
       trkSegXfromMatch[row][col] = -999;  
       trkSegYfromMatch[row][col] = -999;  
+      trkSegZfromMatch[row][col] = -999;  
+      trkSegRfromMatch[row][col] = -999;  
       trkSegPhifromMatch[row][col] = -999;
+      trkSegEtafromMatch[row][col] = -999;
 
       trkSegIsArb[row][col] = -999;
       trkSegX[row][col]     = -999;
       trkSegY[row][col]     = -999;
+      trkSegZ[row][col]     = -999;
       trkSegR[row][col]     = -999;
       trkSegPhi[row][col]   = -999;
+      trkSegEta[row][col]   = -999;
     }
   // ------------------------------------------------------  
 
@@ -1689,14 +2057,16 @@ void TrigEff::muonsInit()
   rchLayer    = new vector<int>;
 
   rchMuonSize = new vector<int>;
-  rchEtaMatrix.ResizeTo(MAX_MUONS,MAX_CSC_RECHIT);
-  rchPhiMatrix.ResizeTo(MAX_MUONS,MAX_CSC_RECHIT);
-  rchPhi02PIMatrix.ResizeTo(MAX_MUONS,MAX_CSC_RECHIT);
-  rchStationMatrix.ResizeTo(MAX_MUONS,MAX_CSC_RECHIT);
-  rchChamberMatrix.ResizeTo(MAX_MUONS,MAX_CSC_RECHIT);
-  rchRingMatrix.ResizeTo(MAX_MUONS,MAX_CSC_RECHIT);
-  rchLayerMatrix.ResizeTo(MAX_MUONS,MAX_CSC_RECHIT);
-  rchTypeMatrix.ResizeTo(MAX_MUONS,MAX_CSC_RECHIT);
+  /*
+    rchEtaMatrix.ResizeTo(MAX_MUONS,MAX_CSC_RECHIT);
+    rchPhiMatrix.ResizeTo(MAX_MUONS,MAX_CSC_RECHIT);
+    rchPhi02PIMatrix.ResizeTo(MAX_MUONS,MAX_CSC_RECHIT);
+    rchStationMatrix.ResizeTo(MAX_MUONS,MAX_CSC_RECHIT);
+    rchChamberMatrix.ResizeTo(MAX_MUONS,MAX_CSC_RECHIT);
+    rchRingMatrix.ResizeTo(MAX_MUONS,MAX_CSC_RECHIT);
+    rchLayerMatrix.ResizeTo(MAX_MUONS,MAX_CSC_RECHIT);
+    rchTypeMatrix.ResizeTo(MAX_MUONS,MAX_CSC_RECHIT);
+  */
 
   for (int row=0; row < MAX_MUONS; row++) 
     for (int col=0; col < MAX_CSC_RECHIT; col++) {
@@ -1712,56 +2082,84 @@ void TrigEff::muonsInit()
   
 
   // propagation to ME1/1
-    muons_x_mep11 = new vector<float>;
-    muons_y_mep11 = new vector<float>;
-    muons_z_mep11 = new vector<float>;
-  muons_phi_mep11 = new vector<float>;
-  muons_eta_mep11 = new vector<float>;
-                
-    muons_x_mem11 = new vector<float>;
-    muons_y_mem11 = new vector<float>;
-    muons_z_mem11 = new vector<float>;
-  muons_phi_mem11 = new vector<float>;
-  muons_eta_mem11 = new vector<float>;
+    muons_x_me11 = new vector<float>;
+    muons_y_me11 = new vector<float>;
+    muons_z_me11 = new vector<float>;
+  muons_phi_me11 = new vector<float>;
+  muons_eta_me11 = new vector<float>;
 
   // propagation to ME1
-    muons_x_mep1 = new vector<float>;
-    muons_y_mep1 = new vector<float>;
-    muons_z_mep1 = new vector<float>;
-  muons_phi_mep1 = new vector<float>;
-  muons_eta_mep1 = new vector<float>;
+    muons_x_me1 = new vector<float>;
+    muons_y_me1 = new vector<float>;
+    muons_z_me1 = new vector<float>;
+  muons_phi_me1 = new vector<float>;
+  muons_eta_me1 = new vector<float>;
                  
-    muons_x_mem1 = new vector<float>;
-    muons_y_mem1 = new vector<float>;
-    muons_z_mem1 = new vector<float>;
-  muons_phi_mem1 = new vector<float>;
-  muons_eta_mem1 = new vector<float>;
-
   // propagation to ME2
-    muons_x_mep2 = new vector<float>;
-    muons_y_mep2 = new vector<float>;
-    muons_z_mep2 = new vector<float>;
-  muons_phi_mep2 = new vector<float>;
-  muons_eta_mep2 = new vector<float>;
-                  
-    muons_x_mem2 = new vector<float>;
-    muons_y_mem2 = new vector<float>;
-    muons_z_mem2 = new vector<float>;
-  muons_phi_mem2 = new vector<float>;
-  muons_eta_mem2 = new vector<float>;
+    muons_x_me2 = new vector<float>;
+    muons_y_me2 = new vector<float>;
+    muons_z_me2 = new vector<float>;
+  muons_phi_me2 = new vector<float>;
+  muons_eta_me2 = new vector<float>;
 
   // propagation to ME3                 
-    muons_x_mep3 = new vector<float>;
-    muons_y_mep3 = new vector<float>;
-    muons_z_mep3 = new vector<float>;
-  muons_phi_mep3 = new vector<float>;
-  muons_eta_mep3 = new vector<float>;
+    muons_x_me3 = new vector<float>;
+    muons_y_me3 = new vector<float>;
+    muons_z_me3 = new vector<float>;
+  muons_phi_me3 = new vector<float>;
+  muons_eta_me3 = new vector<float>;
                  
-    muons_x_mem3 = new vector<float>;
-    muons_y_mem3 = new vector<float>;
-    muons_z_mem3 = new vector<float>;
-  muons_phi_mem3 = new vector<float>;
-  muons_eta_mem3 = new vector<float>;
+//   // propagation to ME1/1
+//     muons_x_mep11 = new vector<float>;
+//     muons_y_mep11 = new vector<float>;
+//     muons_z_mep11 = new vector<float>;
+//   muons_phi_mep11 = new vector<float>;
+//   muons_eta_mep11 = new vector<float>;
+                
+//     muons_x_mem11 = new vector<float>;
+//     muons_y_mem11 = new vector<float>;
+//     muons_z_mem11 = new vector<float>;
+//   muons_phi_mem11 = new vector<float>;
+//   muons_eta_mem11 = new vector<float>;
+
+//   // propagation to ME1
+//     muons_x_mep1 = new vector<float>;
+//     muons_y_mep1 = new vector<float>;
+//     muons_z_mep1 = new vector<float>;
+//   muons_phi_mep1 = new vector<float>;
+//   muons_eta_mep1 = new vector<float>;
+                 
+//     muons_x_mem1 = new vector<float>;
+//     muons_y_mem1 = new vector<float>;
+//     muons_z_mem1 = new vector<float>;
+//   muons_phi_mem1 = new vector<float>;
+//   muons_eta_mem1 = new vector<float>;
+
+//   // propagation to ME2
+//     muons_x_mep2 = new vector<float>;
+//     muons_y_mep2 = new vector<float>;
+//     muons_z_mep2 = new vector<float>;
+//   muons_phi_mep2 = new vector<float>;
+//   muons_eta_mep2 = new vector<float>;
+                  
+//     muons_x_mem2 = new vector<float>;
+//     muons_y_mem2 = new vector<float>;
+//     muons_z_mem2 = new vector<float>;
+//   muons_phi_mem2 = new vector<float>;
+//   muons_eta_mem2 = new vector<float>;
+
+//   // propagation to ME3                 
+//     muons_x_mep3 = new vector<float>;
+//     muons_y_mep3 = new vector<float>;
+//     muons_z_mep3 = new vector<float>;
+//   muons_phi_mep3 = new vector<float>;
+//   muons_eta_mep3 = new vector<float>;
+                 
+//     muons_x_mem3 = new vector<float>;
+//     muons_y_mem3 = new vector<float>;
+//     muons_z_mem3 = new vector<float>;
+//   muons_phi_mem3 = new vector<float>;
+//   muons_eta_mem3 = new vector<float>;
   
 }
 
@@ -1907,54 +2305,77 @@ void TrigEff::muonsDel() {
   delete [] rchPhiList;
   delete [] rchPhiList_02PI;
 
-
-    vector<float>().swap(*muons_x_mep11);
-    vector<float>().swap(*muons_y_mep11);
-    vector<float>().swap(*muons_z_mep11);
-  vector<float>().swap(*muons_phi_mep11);
-  vector<float>().swap(*muons_eta_mep11);
+    vector<float>().swap(*muons_x_me11);
+    vector<float>().swap(*muons_y_me11);
+    vector<float>().swap(*muons_z_me11);
+  vector<float>().swap(*muons_phi_me11);
+  vector<float>().swap(*muons_eta_me11);
+                                    
+    vector<float>().swap(*muons_x_me1);
+    vector<float>().swap(*muons_y_me1);
+    vector<float>().swap(*muons_z_me1);
+  vector<float>().swap(*muons_phi_me1);
+  vector<float>().swap(*muons_eta_me1);
+                                    
+    vector<float>().swap(*muons_x_me2);
+    vector<float>().swap(*muons_y_me2);
+    vector<float>().swap(*muons_z_me2);
+  vector<float>().swap(*muons_phi_me2);
+  vector<float>().swap(*muons_eta_me2);
+                       
+    vector<float>().swap(*muons_x_me3);
+    vector<float>().swap(*muons_y_me3);
+    vector<float>().swap(*muons_z_me3);
+  vector<float>().swap(*muons_phi_me3);
+  vector<float>().swap(*muons_eta_me3);
+                       
+//     vector<float>().swap(*muons_x_mep11);
+//     vector<float>().swap(*muons_y_mep11);
+//     vector<float>().swap(*muons_z_mep11);
+//   vector<float>().swap(*muons_phi_mep11);
+//   vector<float>().swap(*muons_eta_mep11);
                                      
-    vector<float>().swap(*muons_x_mem11);
-    vector<float>().swap(*muons_y_mem11);
-    vector<float>().swap(*muons_z_mem11);
-  vector<float>().swap(*muons_phi_mem11);
-  vector<float>().swap(*muons_eta_mem11);
+//     vector<float>().swap(*muons_x_mem11);
+//     vector<float>().swap(*muons_y_mem11);
+//     vector<float>().swap(*muons_z_mem11);
+//   vector<float>().swap(*muons_phi_mem11);
+//   vector<float>().swap(*muons_eta_mem11);
 
-    vector<float>().swap(*muons_x_mep1);
-    vector<float>().swap(*muons_y_mep1);
-    vector<float>().swap(*muons_z_mep1);
-  vector<float>().swap(*muons_phi_mep1);
-  vector<float>().swap(*muons_eta_mep1);
+//     vector<float>().swap(*muons_x_mep1);
+//     vector<float>().swap(*muons_y_mep1);
+//     vector<float>().swap(*muons_z_mep1);
+//   vector<float>().swap(*muons_phi_mep1);
+//   vector<float>().swap(*muons_eta_mep1);
                                      
-    vector<float>().swap(*muons_x_mem1);
-    vector<float>().swap(*muons_y_mem1);
-    vector<float>().swap(*muons_z_mem1);
-  vector<float>().swap(*muons_phi_mem1);
-  vector<float>().swap(*muons_eta_mem1);
+//     vector<float>().swap(*muons_x_mem1);
+//     vector<float>().swap(*muons_y_mem1);
+//     vector<float>().swap(*muons_z_mem1);
+//   vector<float>().swap(*muons_phi_mem1);
+//   vector<float>().swap(*muons_eta_mem1);
 
-    vector<float>().swap(*muons_x_mep2);
-    vector<float>().swap(*muons_y_mep2);
-    vector<float>().swap(*muons_z_mep2);
-  vector<float>().swap(*muons_phi_mep2);
-  vector<float>().swap(*muons_eta_mep2);
+//     vector<float>().swap(*muons_x_mep2);
+//     vector<float>().swap(*muons_y_mep2);
+//     vector<float>().swap(*muons_z_mep2);
+//   vector<float>().swap(*muons_phi_mep2);
+//   vector<float>().swap(*muons_eta_mep2);
                        
-    vector<float>().swap(*muons_x_mem2);
-    vector<float>().swap(*muons_y_mem2);
-    vector<float>().swap(*muons_z_mem2);
-  vector<float>().swap(*muons_phi_mem2);
-  vector<float>().swap(*muons_eta_mem2);
+//     vector<float>().swap(*muons_x_mem2);
+//     vector<float>().swap(*muons_y_mem2);
+//     vector<float>().swap(*muons_z_mem2);
+//   vector<float>().swap(*muons_phi_mem2);
+//   vector<float>().swap(*muons_eta_mem2);
                        
-    vector<float>().swap(*muons_x_mep3);
-    vector<float>().swap(*muons_y_mep3);
-    vector<float>().swap(*muons_z_mep3);
-  vector<float>().swap(*muons_phi_mep3);
-  vector<float>().swap(*muons_eta_mep3);
+//     vector<float>().swap(*muons_x_mep3);
+//     vector<float>().swap(*muons_y_mep3);
+//     vector<float>().swap(*muons_z_mep3);
+//   vector<float>().swap(*muons_phi_mep3);
+//   vector<float>().swap(*muons_eta_mep3);
                        
-    vector<float>().swap(*muons_x_mem3);
-    vector<float>().swap(*muons_y_mem3);
-    vector<float>().swap(*muons_z_mem3);
-  vector<float>().swap(*muons_phi_mem3);
-  vector<float>().swap(*muons_eta_mem3);
+//     vector<float>().swap(*muons_x_mem3);
+//     vector<float>().swap(*muons_y_mem3);
+//     vector<float>().swap(*muons_z_mem3);
+//   vector<float>().swap(*muons_phi_mem3);
+//   vector<float>().swap(*muons_eta_mem3);
 
 }
 
@@ -2066,24 +2487,44 @@ void TrigEff::csctfInit() {
 
   NumLCTsTrk    = new vector<int>; 
     
-  trLctEndcap.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK); 
-  trLctSector.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK); 
-  trLctSubSector.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK); 
-  trLctBx.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK); 
-  trLctBx0.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK); 
+  /*
+    trLctEndcap.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK); 
+    trLctSector.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK); 
+    trLctSubSector.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK); 
+    trLctBx.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK); 
+    trLctBx0.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK); 
   
-  trLctStation.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK); 
-  trLctRing.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK); 
-  trLctChamber.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK); 
-  trLctTriggerCSCID.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK); 
-  trLctFpga.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK);	  
+    trLctStation.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK); 
+    trLctRing.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK); 
+    trLctChamber.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK); 
+    trLctTriggerCSCID.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK); 
+    trLctFpga.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK);	  
+    
+    trLctlocalPhi.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK); 
+    trLctglobalPhi.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK);   
+    trLctglobalEta.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK); 
   
-  trLctlocalPhi.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK); 
-  trLctglobalPhi.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK);   
-  trLctglobalEta.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK); 
-  
-  trLctstripNum.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK);   
-  trLctwireGroup.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK);     
+    trLctstripNum.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK);   
+    trLctwireGroup.ResizeTo(MAX_CSCTF_TRK,MAX_LCTS_PER_TRK);     
+  */
+
+  // all LCTs
+  lctEndcap       = new vector<int>; 
+  lctSector       = new vector<int>; 
+  lctSubSector    = new vector<int>; 
+  lctBx           = new vector<int>; 
+  lctBx0          = new vector<int>; 
+  lctStation      = new vector<int>; 
+  lctRing         = new vector<int>; 
+  lctChamber      = new vector<int>; 
+  lctTriggerCSCID = new vector<int>; 
+  lctFpga         = new vector<int>; 
+  lctlocalPhi     = new vector<int>; 
+  lctglobalPhi    = new vector<int>; 
+  lctglobalEta    = new vector<int>; 
+  lctstripNum     = new vector<int>; 
+  lctwireGroup    = new vector<int>;   
+
 
 }
 
@@ -2120,6 +2561,22 @@ void TrigEff::csctfDel() {
   vector<int>().swap(*PtBitTrk );
 
   vector<int>().swap(*NumLCTsTrk );
+
+  vector<int>().swap(*lctEndcap); 
+  vector<int>().swap(*lctSector); 
+  vector<int>().swap(*lctSubSector); 
+  vector<int>().swap(*lctBx); 
+  vector<int>().swap(*lctBx0); 
+  vector<int>().swap(*lctStation); 
+  vector<int>().swap(*lctRing); 
+  vector<int>().swap(*lctChamber); 
+  vector<int>().swap(*lctTriggerCSCID); 
+  vector<int>().swap(*lctFpga);     
+  vector<int>().swap(*lctlocalPhi); 
+  vector<int>().swap(*lctglobalPhi);   
+  vector<int>().swap(*lctglobalEta); 
+  vector<int>().swap(*lctstripNum);   
+  vector<int>().swap(*lctwireGroup);   
 
 }
 
@@ -2302,9 +2759,6 @@ void TrigEff::fillCSCTF(const edm::Handle<L1CSCTrackCollection> tracks,
             lctTrk = lctRange.first ; 
           lctTrk  != lctRange.second; lctTrk++, lctTrkId++){
 
-        cout << "nTrk-1: " << nTrk-1 << endl;
-        cout << "LctTrkId_: " << LctTrkId_ << endl;
-
         trLctEndcap[nTrk-1][LctTrkId_] = (*lctOfTrks).first.zendcap();
         // sector (pos: 1->6, neg: 7 -> 12)
         if ((*lctOfTrks).first.zendcap() > 0)
@@ -2406,6 +2860,126 @@ void TrigEff::fillCSCTF(const edm::Handle<L1CSCTrackCollection> tracks,
   } //for(L1CSCTrackCollection::const_iterator trk=csctfTrks->begin(); trk<csctfTrks->end(); trk++,nTrk++){
 
   SizeTrk = nTrk;
+
+}
+
+void TrigEff::fillAllLCTs(const edm::Handle<CSCCorrelatedLCTDigiCollection> corrlcts, 
+                          CSCSectorReceiverLUT* srLUTs_[5][2]) {
+  
+  // ALL LCTs
+  int nLCT=0;
+  for(CSCCorrelatedLCTDigiCollection::DigiRangeIterator 
+        corrLct = corrlcts.product()->begin(); 
+      corrLct != corrlcts.product()->end()  ; corrLct++){
+      
+    nLCT++;
+ 
+    int lctId = 0;	
+      
+    CSCCorrelatedLCTDigiCollection::Range lctRange = 
+      corrlcts.product()->get((*corrLct).first);
+			
+    for(CSCCorrelatedLCTDigiCollection::const_iterator 
+          lct = lctRange.first ; 
+        lct != lctRange.second; lct++, lctId++){
+		
+      lctEndcap->push_back((*corrLct).first.zendcap());
+      if ((*corrLct).first.zendcap() > 0)
+        lctSector->push_back((*corrLct).first.triggerSector());
+      else
+        lctSector->push_back(6+(*corrLct).first.triggerSector());
+	
+      lctSubSector->push_back(CSCTriggerNumbering::triggerSubSectorFromLabels((*corrLct).first));
+      lctBx->push_back(lct->getBX());
+      lctBx0->push_back(lct->getBX0());
+	
+      lctStation->push_back((*corrLct).first.station());
+      lctRing->push_back((*corrLct).first.ring());
+      lctChamber->push_back((*corrLct).first.chamber());
+      lctTriggerCSCID->push_back((*corrLct).first.triggerCscId());
+      lctFpga->push_back((lctSubSector->back() ? lctSubSector->back() : (*corrLct).first.station()+1));
+	
+
+      // Check if DetId is within range
+      if( lctSector->back() < 1 || lctSector->back() > 12 || 
+          lctStation->back() < 1 || lctStation->back() >  4 || 
+          lctTriggerCSCID->back() < 1 || lctTriggerCSCID->back() >  9 || 
+          lctId < 0 || lctId >  1 ){
+	  
+        cout<<"  LCT ERROR: CSC digi are out of range: ";
+	  
+        continue;
+      }
+
+      // handles not to overload the method: mostly for readability	      
+      int endcap = (*corrLct).first.zendcap();
+      if (endcap < 0) endcap = 0; 
+	
+      int StationLct  = (*corrLct).first.station();
+      int CscIdLct    = (*corrLct).first.triggerCscId();
+      int SubSectorLct = 
+        CSCTriggerNumbering::triggerSubSectorFromLabels((*corrLct).first);
+	      
+      int FPGALct    = ( SubSectorLct ? SubSectorLct-1 : StationLct );
+	
+	
+      // local Phi
+      lclphidat lclPhi;
+	
+      try {
+	  
+        lctstripNum->push_back(lct->getStrip());
+        lclPhi = srLUTs_[FPGALct][endcap] -> localPhi(lct->getStrip(), 
+                                                      lct->getPattern(), 
+                                                      lct->getQuality(), 
+                                                      lct->getBend() );
+	  
+        lctlocalPhi->push_back(lclPhi.phi_local);
+      } 
+      catch(...) { 
+        bzero(&lclPhi,sizeof(lclPhi)); 
+        lctlocalPhi->push_back(-999);
+      }
+		
+	
+      // Global Phi
+      gblphidat gblPhi;
+	
+      try {
+	  
+        lctwireGroup->push_back(lct->getKeyWG());
+
+        gblPhi = srLUTs_[FPGALct][endcap] -> globalPhiME(lclPhi.phi_local  , 
+                                                         lct->getKeyWG(), 
+                                                         CscIdLct);
+	  
+        lctglobalPhi->push_back(gblPhi.global_phi);
+	  
+      } catch(...) { 
+        bzero(&gblPhi,sizeof(gblPhi)); 
+        lctglobalPhi->push_back(-999);
+      }
+	
+      // Global Eta
+      gbletadat gblEta;
+	
+      try {
+        gblEta = srLUTs_[FPGALct][endcap] -> globalEtaME(lclPhi.phi_bend_local, 
+                                                         lclPhi.phi_local     , 
+                                                         lct->getKeyWG()   , 
+                                                         CscIdLct);
+        lctglobalEta->push_back(gblEta.global_eta);
+      } 	  
+      catch(...) { 
+        bzero(&gblEta,sizeof(gblEta)); 
+        lctglobalEta->push_back(-999);
+      } 
+      
+    } // for(CSCCorrelatedLCTDigiCollection::const_iterator lct 
+  } // for(CSCCorrelatedLCTDigiCollection::DigiRangeIterator lct
+
+  SizeLCTs = nLCT;
+
 }
 
 

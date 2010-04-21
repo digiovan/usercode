@@ -65,6 +65,8 @@
 #include "CondFormats/DataRecord/interface/L1MuTriggerPtScaleRcd.h"
 #include "DataFormats/CSCDigi/interface/CSCCorrelatedLCTDigiCollection.h"
 
+#include "RecoMuon/TrackingTools/interface/MuonServiceProxy.h"
+
 #include <vector>
 #include "TMatrixF.h"
 #include "TMatrixD.h"
@@ -77,7 +79,7 @@
 //---------------------------------------------------------------------------
 #define MAX_MUONS 100 
 #define MAX_CSC_RECHIT 35 // 4 stations x 6 layers + some overlap between chambers
-#define MAX_TRK_SEGS 10   // max # segments to a given tracker muon
+#define MAX_TRK_SEGS 100   // max # segments to a given tracker muon
 #define MAX_CSCTF_TRK 36  // max # of CSCTF tracks per BX
 #define MAX_LCTS_PER_TRK 4  // max # of LCTS which form a CSCTF track
 //---------------------------------------------------------------------------
@@ -105,6 +107,7 @@ private:
     std::string level3module;
 
     edm::InputTag csctfTag;
+    edm::InputTag csctfLctsTag;
 
     // to Remove
     edm::InputTag gpTag;
@@ -252,21 +255,48 @@ private:
 
     //segment
     std::vector<int>* trkNSegs;
-    TMatrixF trkSegChamberId; 
-    TMatrixF trkSegRing;    
-    TMatrixF trkSegStation; 
-    TMatrixF trkSegEndcap;  
-    TMatrixF trkSegTriggerSector;
-    TMatrixF trkSegTriggerCscId; 
-    TMatrixF trkSegXfromMatch;
-    TMatrixF trkSegYfromMatch;
-    TMatrixF trkSegPhifromMatch;
- 
-    TMatrixF trkSegIsArb;
-    TMatrixF trkSegX;
-    TMatrixF trkSegY;
-    TMatrixF trkSegR;
-    TMatrixF trkSegPhi;
+    /*
+      TMatrixF trkSegChamberId; 
+      TMatrixF trkSegRing;    
+      TMatrixF trkSegStation; 
+      TMatrixF trkSegEndcap;  
+      TMatrixF trkSegTriggerSector;
+      TMatrixF trkSegTriggerCscId; 
+      TMatrixF trkSegXfromMatch;
+      TMatrixF trkSegYfromMatch;
+      TMatrixF trkSegZfromMatch;
+      TMatrixF trkSegRfromMatch;
+      TMatrixF trkSegPhifromMatch;
+      TMatrixF trkSegEtafromMatch;
+      
+      TMatrixF trkSegIsArb;
+      TMatrixF trkSegX;
+      TMatrixF trkSegY;
+      TMatrixF trkSegZ;
+      TMatrixF trkSegR;
+      TMatrixF trkSegPhi;
+      TMatrixF trkSegEta;
+    */
+    int trkSegChamberId[MAX_MUONS][MAX_TRK_SEGS]; 
+    int trkSegRing[MAX_MUONS][MAX_TRK_SEGS];    
+    int trkSegStation[MAX_MUONS][MAX_TRK_SEGS]; 
+    int trkSegEndcap[MAX_MUONS][MAX_TRK_SEGS];  
+    int trkSegTriggerSector[MAX_MUONS][MAX_TRK_SEGS];
+    int trkSegTriggerCscId[MAX_MUONS][MAX_TRK_SEGS]; 
+    float trkSegXfromMatch[MAX_MUONS][MAX_TRK_SEGS];
+    float trkSegYfromMatch[MAX_MUONS][MAX_TRK_SEGS];
+    float trkSegZfromMatch[MAX_MUONS][MAX_TRK_SEGS];
+    float trkSegRfromMatch[MAX_MUONS][MAX_TRK_SEGS];
+    float trkSegPhifromMatch[MAX_MUONS][MAX_TRK_SEGS];
+    float trkSegEtafromMatch[MAX_MUONS][MAX_TRK_SEGS];
+      
+    int trkSegIsArb[MAX_MUONS][MAX_TRK_SEGS];
+    float trkSegX[MAX_MUONS][MAX_TRK_SEGS];
+    float trkSegY[MAX_MUONS][MAX_TRK_SEGS];
+    float trkSegZ[MAX_MUONS][MAX_TRK_SEGS];
+    float trkSegR[MAX_MUONS][MAX_TRK_SEGS];
+    float trkSegPhi[MAX_MUONS][MAX_TRK_SEGS];
+    float trkSegEta[MAX_MUONS][MAX_TRK_SEGS];
 
     //---------------------------------------------------------------------
     // RECHIT information: only for standalone/global muons!
@@ -281,14 +311,24 @@ private:
     std::vector<int>*   rchLayer;
     
     std::vector<int>* rchMuonSize;//# rechits per muon
-    TMatrixF     rchEtaMatrix;
-    TMatrixF     rchPhiMatrix;
-    TMatrixF     rchPhi02PIMatrix;
-    TMatrixF     rchStationMatrix;
-    TMatrixF     rchChamberMatrix;
-    TMatrixF     rchRingMatrix;
-    TMatrixF     rchLayerMatrix;
-    TMatrixF     rchTypeMatrix;
+    /*
+      TMatrixF     rchEtaMatrix;
+      TMatrixF     rchPhiMatrix;
+      TMatrixF     rchPhi02PIMatrix;
+      TMatrixF     rchStationMatrix;
+      TMatrixF     rchChamberMatrix;
+      TMatrixF     rchRingMatrix;
+      TMatrixF     rchLayerMatrix;
+      TMatrixF     rchTypeMatrix;
+    */
+    float rchEtaMatrix[MAX_MUONS][MAX_CSC_RECHIT];
+    float rchPhiMatrix[MAX_MUONS][MAX_CSC_RECHIT];
+    float rchPhi02PIMatrix[MAX_MUONS][MAX_CSC_RECHIT];
+    int   rchStationMatrix[MAX_MUONS][MAX_CSC_RECHIT];
+    int   rchChamberMatrix[MAX_MUONS][MAX_CSC_RECHIT];
+    int   rchRingMatrix[MAX_MUONS][MAX_CSC_RECHIT];
+    int   rchLayerMatrix[MAX_MUONS][MAX_CSC_RECHIT];
+    int   rchTypeMatrix[MAX_MUONS][MAX_CSC_RECHIT];
 
     //--------------------------------------------------------------------- 
     // old format: keep it until you are sure the TMatrixD works
@@ -304,56 +344,84 @@ private:
     // Propagation block
     //---------------------------------------------------------------------
     // propagation to ME1/1
-    std::vector<float>*    muons_x_mep11;
-    std::vector<float>*    muons_y_mep11;
-    std::vector<float>*    muons_z_mep11;
-    std::vector<float>*  muons_phi_mep11;
-    std::vector<float>*  muons_eta_mep11;
+    std::vector<float>*    muons_x_me11;
+    std::vector<float>*    muons_y_me11;
+    std::vector<float>*    muons_z_me11;
+    std::vector<float>*  muons_phi_me11;
+    std::vector<float>*  muons_eta_me11;
                                  
-    std::vector<float>*    muons_x_mem11;
-    std::vector<float>*    muons_y_mem11;
-    std::vector<float>*    muons_z_mem11;
-    std::vector<float>*  muons_phi_mem11;
-    std::vector<float>*  muons_eta_mem11;
-
     // propagation to ME1
-    std::vector<float>*    muons_x_mep1;
-    std::vector<float>*    muons_y_mep1;
-    std::vector<float>*    muons_z_mep1;
-    std::vector<float>*  muons_phi_mep1;
-    std::vector<float>*  muons_eta_mep1;
+    std::vector<float>*    muons_x_me1;
+    std::vector<float>*    muons_y_me1;
+    std::vector<float>*    muons_z_me1;
+    std::vector<float>*  muons_phi_me1;
+    std::vector<float>*  muons_eta_me1;
                                  
-    std::vector<float>*    muons_x_mem1;
-    std::vector<float>*    muons_y_mem1;
-    std::vector<float>*    muons_z_mem1;
-    std::vector<float>*  muons_phi_mem1;
-    std::vector<float>*  muons_eta_mem1;
-
     // propagation to ME2
-    std::vector<float>*    muons_x_mep2;
-    std::vector<float>*    muons_y_mep2;
-    std::vector<float>*    muons_z_mep2;
-    std::vector<float>*  muons_phi_mep2;
-    std::vector<float>*  muons_eta_mep2;
+    std::vector<float>*    muons_x_me2;
+    std::vector<float>*    muons_y_me2;
+    std::vector<float>*    muons_z_me2;
+    std::vector<float>*  muons_phi_me2;
+    std::vector<float>*  muons_eta_me2;
       
-    std::vector<float>*    muons_x_mem2;
-    std::vector<float>*    muons_y_mem2;
-    std::vector<float>*    muons_z_mem2;
-    std::vector<float>*  muons_phi_mem2;
-    std::vector<float>*  muons_eta_mem2;
-
     // propagation to ME3
-    std::vector<float>*    muons_x_mep3;
-    std::vector<float>*    muons_y_mep3;
-    std::vector<float>*    muons_z_mep3;
-    std::vector<float>*  muons_phi_mep3;
-    std::vector<float>*  muons_eta_mep3;
+    std::vector<float>*    muons_x_me3;
+    std::vector<float>*    muons_y_me3;
+    std::vector<float>*    muons_z_me3;
+    std::vector<float>*  muons_phi_me3;
+    std::vector<float>*  muons_eta_me3;
                                  
-    std::vector<float>*    muons_x_mem3;
-    std::vector<float>*    muons_y_mem3;
-    std::vector<float>*    muons_z_mem3;
-    std::vector<float>*  muons_phi_mem3;
-    std::vector<float>*  muons_eta_mem3;
+/*     // propagation to ME1/1 */
+/*     std::vector<float>*    muons_x_mep11; */
+/*     std::vector<float>*    muons_y_mep11; */
+/*     std::vector<float>*    muons_z_mep11; */
+/*     std::vector<float>*  muons_phi_mep11; */
+/*     std::vector<float>*  muons_eta_mep11; */
+                                 
+/*     std::vector<float>*    muons_x_mem11; */
+/*     std::vector<float>*    muons_y_mem11; */
+/*     std::vector<float>*    muons_z_mem11; */
+/*     std::vector<float>*  muons_phi_mem11; */
+/*     std::vector<float>*  muons_eta_mem11; */
+
+/*     // propagation to ME1 */
+/*     std::vector<float>*    muons_x_mep1; */
+/*     std::vector<float>*    muons_y_mep1; */
+/*     std::vector<float>*    muons_z_mep1; */
+/*     std::vector<float>*  muons_phi_mep1; */
+/*     std::vector<float>*  muons_eta_mep1; */
+                                 
+/*     std::vector<float>*    muons_x_mem1; */
+/*     std::vector<float>*    muons_y_mem1; */
+/*     std::vector<float>*    muons_z_mem1; */
+/*     std::vector<float>*  muons_phi_mem1; */
+/*     std::vector<float>*  muons_eta_mem1; */
+
+/*     // propagation to ME2 */
+/*     std::vector<float>*    muons_x_mep2; */
+/*     std::vector<float>*    muons_y_mep2; */
+/*     std::vector<float>*    muons_z_mep2; */
+/*     std::vector<float>*  muons_phi_mep2; */
+/*     std::vector<float>*  muons_eta_mep2; */
+      
+/*     std::vector<float>*    muons_x_mem2; */
+/*     std::vector<float>*    muons_y_mem2; */
+/*     std::vector<float>*    muons_z_mem2; */
+/*     std::vector<float>*  muons_phi_mem2; */
+/*     std::vector<float>*  muons_eta_mem2; */
+
+/*     // propagation to ME3 */
+/*     std::vector<float>*    muons_x_mep3; */
+/*     std::vector<float>*    muons_y_mep3; */
+/*     std::vector<float>*    muons_z_mep3; */
+/*     std::vector<float>*  muons_phi_mep3; */
+/*     std::vector<float>*  muons_eta_mep3; */
+                                 
+/*     std::vector<float>*    muons_x_mem3; */
+/*     std::vector<float>*    muons_y_mem3; */
+/*     std::vector<float>*    muons_z_mem3; */
+/*     std::vector<float>*  muons_phi_mem3; */
+/*     std::vector<float>*  muons_eta_mem3; */
     //---------------------------------------------------------------------
 
 
@@ -434,25 +502,49 @@ private:
     // it contains the number of LCT forming a track 
     std::vector<int>* NumLCTsTrk; 
     
-    TMatrixD trLctEndcap; 
-    TMatrixD trLctSector; 
-    TMatrixD trLctSubSector; 
-    TMatrixD trLctBx; 
-    TMatrixD trLctBx0; 
-       
-    TMatrixD trLctStation; 
-    TMatrixD trLctRing; 
-    TMatrixD trLctChamber; 
-    TMatrixD trLctTriggerCSCID; 
-    TMatrixD trLctFpga;	  
+    int trLctEndcap[MAX_CSCTF_TRK][MAX_LCTS_PER_TRK]; 
+    int trLctSector[MAX_CSCTF_TRK][MAX_LCTS_PER_TRK]; 
+    int trLctSubSector[MAX_CSCTF_TRK][MAX_LCTS_PER_TRK]; 
+    int trLctBx[MAX_CSCTF_TRK][MAX_LCTS_PER_TRK]; 
+    int trLctBx0[MAX_CSCTF_TRK][MAX_LCTS_PER_TRK]; 
+    
+    int trLctStation[MAX_CSCTF_TRK][MAX_LCTS_PER_TRK]; 
+    int trLctRing[MAX_CSCTF_TRK][MAX_LCTS_PER_TRK]; 
+    int trLctChamber[MAX_CSCTF_TRK][MAX_LCTS_PER_TRK]; 
+    int trLctTriggerCSCID[MAX_CSCTF_TRK][MAX_LCTS_PER_TRK]; 
+    int trLctFpga[MAX_CSCTF_TRK][MAX_LCTS_PER_TRK];	  
 
      // note: the SPs return them in bits 
-    TMatrixD trLctlocalPhi; 
-    TMatrixD trLctglobalPhi;   
-    TMatrixD trLctglobalEta; 
+    int trLctlocalPhi[MAX_CSCTF_TRK][MAX_LCTS_PER_TRK]; 
+    int trLctglobalPhi[MAX_CSCTF_TRK][MAX_LCTS_PER_TRK];   
+    int trLctglobalEta[MAX_CSCTF_TRK][MAX_LCTS_PER_TRK]; 
 
-    TMatrixD trLctstripNum;   
-    TMatrixD trLctwireGroup;     
+    int trLctstripNum[MAX_CSCTF_TRK][MAX_LCTS_PER_TRK];   
+    int trLctwireGroup[MAX_CSCTF_TRK][MAX_LCTS_PER_TRK];     
+    
+    // ALL LCTS
+    void fillAllLCTs(const edm::Handle<CSCCorrelatedLCTDigiCollection> corrlcts,
+                     CSCSectorReceiverLUT* srLUTs_[5][2]); 
+   
+    int SizeLCTs;
+    std::vector<int>* lctEndcap; 
+    std::vector<int>* lctSector; 
+    std::vector<int>* lctSubSector; 
+    std::vector<int>* lctBx; 
+    std::vector<int>* lctBx0; 
+    std::vector<int>* lctStation; 
+    std::vector<int>* lctRing; 
+    std::vector<int>* lctChamber; 
+    std::vector<int>* lctTriggerCSCID; 
+    std::vector<int>* lctFpga;     
+
+    // note: the SPs return them in bits 
+    std::vector<int>* lctlocalPhi; 
+    std::vector<int>* lctglobalPhi;   
+    std::vector<int>* lctglobalEta; 
+    std::vector<int>* lctstripNum;   
+    std::vector<int>* lctwireGroup;   
+
 
     //---------------------------------------------------------------------
 
@@ -503,7 +595,7 @@ private:
     int whichError;
 
     virtual void analyze(const edm::Event&, const edm::EventSetup&);
-    virtual void endJob(void){}
+    virtual void endJob(void);//{}
 
     //virtual void analyzeTrigger(const edm::Event&, const std::string&);
     //virtual void beginRun(edm::Run const&, edm::EventSetup const&);
@@ -545,6 +637,9 @@ public:
 
     void csctfInit(); 
     void csctfDel ();  
+
+    MuonServiceProxy* theService;
+
 
 };
 
