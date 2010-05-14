@@ -129,6 +129,8 @@ private:
     std::vector<int>*   isTrackerMuon;
     std::vector<int>*   isStandAloneMuon;
     std::vector<int>*   isMuonAllArbitrated;
+    std::vector<int>*   isTMLastStationAngTight;//for trk muons only
+    std::vector<int>*   isGlobalMuonPromptTight;//for gbl muons only
 
     std::vector<int>*   isEnergyValid;
     std::vector<float>* caloCompatibility; 
@@ -146,6 +148,8 @@ private:
     //---------------------------------------------------------------------
     // Global Muon Block
     //---------------------------------------------------------------------
+    //std::vector<float>* gmrEnergy;
+    //std::vector<float>* gmrDEnergy;
     std::vector<float>* gmrPt;
     std::vector<float>* gmrEta;
     std::vector<float>* gmrPhi;
@@ -186,7 +190,8 @@ private:
     //---------------------------------------------------------------------
     // Standalone Muon Block
     //---------------------------------------------------------------------
-    std::vector<float>* stdEnergy;
+    //std::vector<float>* stdEnergy;
+    //std::vector<float>* stdDEnergy;
     std::vector<float>* stdPt;
     std::vector<float>* stdEta;
     std::vector<float>* stdPhi;
@@ -221,7 +226,8 @@ private:
     //---------------------------------------------------------------------
     // Tracker Muon Block
     //---------------------------------------------------------------------
-    std::vector<float>* trkEnergy;
+    //std::vector<float>* trkEnergy;
+    //std::vector<float>* trkDEnergy;
     std::vector<float>* trkPt;
     std::vector<float>* trkEta;
     std::vector<float>* trkPhi;
@@ -298,10 +304,17 @@ private:
     float trkSegPhi[MAX_MUONS][MAX_TRK_SEGS];
     float trkSegEta[MAX_MUONS][MAX_TRK_SEGS];
 
+    float trkSegDxDz[MAX_MUONS][MAX_TRK_SEGS];
+    float trkSegDyDz[MAX_MUONS][MAX_TRK_SEGS];
+    float trkSegDxDzErr[MAX_MUONS][MAX_TRK_SEGS];
+    float trkSegDyDzErr[MAX_MUONS][MAX_TRK_SEGS];
+
     //---------------------------------------------------------------------
     // RECHIT information: only for standalone/global muons!
     //---------------------------------------------------------------------
     std::vector<int>*   rchCSCtype;
+    std::vector<float>* rchEtaLocal;
+    std::vector<float>* rchPhiLocal;
     std::vector<float>* rchEta;
     std::vector<float>* rchPhi;
     std::vector<float>* rchPhi_02PI;
@@ -321,6 +334,8 @@ private:
       TMatrixF     rchLayerMatrix;
       TMatrixF     rchTypeMatrix;
     */
+    float rchEtaMatrixLocal[MAX_MUONS][MAX_CSC_RECHIT];
+    float rchPhiMatrixLocal[MAX_MUONS][MAX_CSC_RECHIT];
     float rchEtaMatrix[MAX_MUONS][MAX_CSC_RECHIT];
     float rchPhiMatrix[MAX_MUONS][MAX_CSC_RECHIT];
     float rchPhi02PIMatrix[MAX_MUONS][MAX_CSC_RECHIT];

@@ -113,10 +113,12 @@ TrigEff::TrigEff(const edm::ParameterSet& pset):edm::EDAnalyzer(){
   
   recoMuons->Branch("muonSize", &muonSize, "muonSize/I");
    
-  recoMuons->Branch("isGlobalMuon"        , &isGlobalMuon       );
-  recoMuons->Branch("isTrackerMuon"       , &isTrackerMuon      );
-  recoMuons->Branch("isStandAloneMuon"    , &isStandAloneMuon   );
-  recoMuons->Branch("isMuonAllArbitrated" , &isMuonAllArbitrated);
+  recoMuons->Branch("isGlobalMuon"           , &isGlobalMuon       );
+  recoMuons->Branch("isTrackerMuon"          , &isTrackerMuon      );
+  recoMuons->Branch("isStandAloneMuon"       , &isStandAloneMuon   );
+  recoMuons->Branch("isMuonAllArbitrated"    , &isMuonAllArbitrated);
+  recoMuons->Branch("isTMLastStationAngTight", &isTMLastStationAngTight);
+  recoMuons->Branch("isGlobalMuonPromptTight"    , &isGlobalMuonPromptTight);
 
   recoMuons->Branch("isEnergyValid", &isEnergyValid);
   recoMuons->Branch("caloCompatibility", &caloCompatibility);
@@ -134,6 +136,8 @@ TrigEff::TrigEff(const edm::ParameterSet& pset):edm::EDAnalyzer(){
   //---------------------------------------------------------------------
   // Global Muon Block Booking
   //---------------------------------------------------------------------
+  //recoMuons->Branch("gmrEnergy"           , &gmrEnergy           );
+  //recoMuons->Branch("gmrDEnergy"          , &gmrDEnergy          );
   recoMuons->Branch("gmrPt"               , &gmrPt               );
   recoMuons->Branch("gmrEta"              , &gmrEta              );
   recoMuons->Branch("gmrPhi"              , &gmrPhi              );
@@ -174,7 +178,8 @@ TrigEff::TrigEff(const edm::ParameterSet& pset):edm::EDAnalyzer(){
   //---------------------------------------------------------------------
   // Standalone Muon Block Booking
   //---------------------------------------------------------------------
-  recoMuons->Branch("stdEnergy"   , &stdEnergy   );
+  //recoMuons->Branch("stdEnergy"   , &stdEnergy   );
+  //recoMuons->Branch("stdDEnergy"  , &stdDEnergy  );
   recoMuons->Branch("stdPt"       , &stdPt       );
   recoMuons->Branch("stdEta"      , &stdEta      );
   recoMuons->Branch("stdPhi"      , &stdPhi      );
@@ -203,7 +208,8 @@ TrigEff::TrigEff(const edm::ParameterSet& pset):edm::EDAnalyzer(){
   //---------------------------------------------------------------------
   // Tracker Muon Block Booking
   //---------------------------------------------------------------------
-  recoMuons->Branch("trkEnergy"   , &trkEnergy   );
+  //recoMuons->Branch("trkEnergy"   , &trkEnergy   );
+  //recoMuons->Branch("trkDEnergy"  , &trkDEnergy  );
   recoMuons->Branch("trkPt"       , &trkPt       );
   recoMuons->Branch("trkEta"      , &trkEta      );
   recoMuons->Branch("trkPhi"      , &trkPhi      );
@@ -258,6 +264,10 @@ TrigEff::TrigEff(const edm::ParameterSet& pset):edm::EDAnalyzer(){
   recoMuons->Branch("trkSegR"    , &trkSegR    , "trkSegR[muonSize][100]/F");
   recoMuons->Branch("trkSegPhi"  , &trkSegPhi  , "trkSegPhi[muonSize][100]/F");
   recoMuons->Branch("trkSegEta"  , &trkSegEta  , "trkSegEta[muonSize][100]/F");
+  recoMuons->Branch("trkSegDxDz"    , &trkSegDxDz    , "trkSegDxDz[muonSize][100]/F");
+  recoMuons->Branch("trkSegDyDz"    , &trkSegDyDz    , "trkSegDyDz[muonSize][100]/F");
+  recoMuons->Branch("trkSegDxDzErr" , &trkSegDxDzErr , "trkSegDxDzErr[muonSize][100]/F");
+  recoMuons->Branch("trkSegDyDzErr" , &trkSegDyDzErr , "trkSegDyDzErr[muonSize][100]/F");
 
 //   recoMuons->Branch("trkNSegs"           , &trkNSegs           );
 //   recoMuons->Branch("trkSegChamberId"    , &trkSegChamberId    );
@@ -286,6 +296,8 @@ TrigEff::TrigEff(const edm::ParameterSet& pset):edm::EDAnalyzer(){
   // RECHIT information: only for standalone/global muons!
   //---------------------------------------------------------------------
   recoMuons->Branch("rchCSCtype" , &rchCSCtype ); 
+  recoMuons->Branch("rchEtaLocal", &rchEtaLocal); 
+  recoMuons->Branch("rchPhiLocal", &rchPhiLocal); 
   recoMuons->Branch("rchEta"     , &rchEta     ); 
   recoMuons->Branch("rchPhi"     , &rchPhi     ); 
   recoMuons->Branch("rchPhi_02PI", &rchPhi_02PI);
@@ -297,6 +309,8 @@ TrigEff::TrigEff(const edm::ParameterSet& pset):edm::EDAnalyzer(){
 
   recoMuons->Branch("rchMuonSize",      &rchMuonSize     );
  
+  recoMuons->Branch("rchEtaMatrixLocal", rchEtaMatrixLocal, "rchEtaMatrixLocal[muonSize][35]/F");
+  recoMuons->Branch("rchPhiMatrixLocal", rchPhiMatrixLocal, "rchPhiMatrixLocal[muonSize][35]/F");
   recoMuons->Branch("rchEtaMatrix"    , rchEtaMatrix    , "rchEtaMatrix[muonSize][35]/F");
   recoMuons->Branch("rchPhiMatrix"    , rchPhiMatrix    , "rchPhiMatrix[muonSize][35]/F");
   recoMuons->Branch("rchPhi02PIMatrix", rchPhi02PIMatrix, "rchPhi02PIMatrix[muonSize][35]/F");
@@ -780,7 +794,12 @@ void TrigEff::fillMuons(const edm::Handle<reco::MuonCollection> muons)
     isGlobalMuon        -> push_back(muon->isGlobalMuon    ()); 
     isTrackerMuon       -> push_back(muon->isTrackerMuon   ()); 
     isStandAloneMuon    -> push_back(muon->isStandAloneMuon());
-    isMuonAllArbitrated -> push_back(muon::isGoodMuon(*muon, muon::AllArbitrated));
+    int isAllArb = muon::isGoodMuon(*muon, muon::AllArbitrated);
+    isMuonAllArbitrated -> push_back(isAllArb);
+    int isTMLSAT = muon::isGoodMuon(*muon, muon::TMLastStationAngTight);
+    isTMLastStationAngTight -> push_back(isTMLSAT);
+    int isGBLPT = muon::isGoodMuon(*muon, muon::GlobalMuonPromptTight);
+    isGlobalMuonPromptTight -> push_back(isGBLPT);
 
     isEnergyValid       -> push_back(muon->isEnergyValid());
     caloCompatibility   -> push_back(muon->caloCompatibility());
@@ -962,14 +981,14 @@ void TrigEff::fillMuons(const edm::Handle<reco::MuonCollection> muons)
     
     //tracker muon    
     if (muon->track().isNonnull()) {
-
+      
       TrackRef trackRefTrk = muon->track();
 
       if (printLevel>0) 
         cout << "(TRK) muon->pt(): " << trackRefTrk->pt() 
              << ", muon->eta(): "    << trackRefTrk->eta() 
              << ", muon->phi(): "    << trackRefTrk->phi() << endl;
-
+      
       trkPt     ->push_back(trackRefTrk->pt       ());
       trkEta    ->push_back(trackRefTrk->eta      ());
       trkPhi    ->push_back(trackRefTrk->phi      ());
@@ -1546,8 +1565,10 @@ void TrigEff::fillMuons(const edm::Handle<reco::MuonCollection> muons)
 
       // var needed to register the better ranked muon
        int   globalTypeRCH = -999;
-       double globalEtaRCH = -999; 
-       double globalPhiRCH = -999;
+        float  localEtaRCH = -999; 
+        float  localPhiRCH = -999;
+        float globalEtaRCH = -999; 
+        float globalPhiRCH = -999;
       int globalStationRCH = -999;
       int globalChamberRCH = -999;
          int globalRingRCH = -999;
@@ -1625,6 +1646,8 @@ void TrigEff::fillMuons(const edm::Handle<reco::MuonCollection> muons)
         // -------------------------------------------------- 
         // new Matrix block
         if (whichMuon < MAX_MUONS && iRechit < MAX_CSC_RECHIT) {
+          rchEtaMatrixLocal[whichMuon][iRechit] = rhitlocal.eta(); 
+          rchPhiMatrixLocal[whichMuon][iRechit] = rhitlocal.phi();
           rchEtaMatrix[whichMuon][iRechit]     = gp.eta(); 
           rchPhiMatrix[whichMuon][iRechit]     = gp.phi();
           rchPhi02PIMatrix[whichMuon][iRechit] = phi02PI;
@@ -1649,6 +1672,8 @@ void TrigEff::fillMuons(const edm::Handle<reco::MuonCollection> muons)
         // See if this hit is closer to the "key" position
         if( lutCSC[id.station()-1][id.layer()-1]<globalTypeRCH || globalTypeRCH<0 ){
           globalTypeRCH    = lutCSC[id.station()-1][id.layer()-1];
+          localEtaRCH      = rhitlocal.eta();
+          localPhiRCH      = rhitlocal.phi();
           globalEtaRCH     = gp.eta();
           globalPhiRCH     = gp.phi();
           globalStationRCH = id.station();
@@ -1664,6 +1689,8 @@ void TrigEff::fillMuons(const edm::Handle<reco::MuonCollection> muons)
 
       // at the end of the loop, write only the best rechit
       rchCSCtype  -> push_back(globalTypeRCH);       
+      rchEtaLocal -> push_back(localEtaRCH);     
+      rchPhiLocal -> push_back(localPhiRCH);     
       rchEta      -> push_back(globalEtaRCH);     
       rchPhi      -> push_back(globalPhiRCH);     
       rchStation  -> push_back(globalStationRCH);
@@ -1722,7 +1749,7 @@ void TrigEff::fillMuons(const edm::Handle<reco::MuonCollection> muons)
       trkIsMatchValid->push_back(muon->isMatchesValid());
 
       if (printLevel > 0)
-        cout << "IsGoodMuon? " 
+        cout << "Is Muon All Arbitrated? " 
              << muon::isGoodMuon(*muon, muon::AllArbitrated) << endl;
       
       // fill the vectors only if the muon is arbitrated
@@ -1795,6 +1822,12 @@ void TrigEff::fillMuons(const edm::Handle<reco::MuonCollection> muons)
             if (segPhi > 2*PI) segPhi -= 2*PI;
             float segEta = gpSeg.eta();
 
+            float segDxDz = segment->dXdZ;
+            float segDyDz = segment->dYdZ;
+            float segDxDzErr = segment->dXdZErr;
+            float segDyDzErr = segment->dYdZErr;
+
+
             if (printLevel>0) {
               cout << "###### IS CSC ########"                << endl;
               cout << "trkSegChamberId:"     << chamberId     << endl;
@@ -1821,6 +1854,11 @@ void TrigEff::fillMuons(const edm::Handle<reco::MuonCollection> muons)
               
               cout << "segPhi:"       << segPhi       << endl;
               cout << "segEta:"       << segEta       << endl;
+
+              cout << "segDxDz:"      << segDxDz      << endl;
+              cout << "segDyDz:"      << segDyDz      << endl;
+              cout << "segDxDzErr:"   << segDxDzErr   << endl;
+              cout << "segDyDzErr:"   << segDyDzErr   << endl;
             }
             
             
@@ -1850,6 +1888,13 @@ void TrigEff::fillMuons(const edm::Handle<reco::MuonCollection> muons)
             
               trkSegPhi[whichMuon][iSegment]= segPhi;
               trkSegEta[whichMuon][iSegment]= segEta;
+
+              trkSegDxDz[whichMuon][iSegment]   = segDxDz;
+              trkSegDyDz[whichMuon][iSegment]   = segDyDz;
+              trkSegDxDzErr[whichMuon][iSegment]= segDxDzErr;
+              trkSegDyDzErr[whichMuon][iSegment]= segDyDzErr;
+
+
             }         
             else
               cout << "ERROR: too many segment or muons "
@@ -1877,10 +1922,12 @@ void TrigEff::fillMuons(const edm::Handle<reco::MuonCollection> muons)
 void TrigEff::muonsInit()
 {
   
-  isGlobalMuon         = new vector<int>;	  
-  isTrackerMuon	       = new vector<int>;
-  isStandAloneMuon     = new vector<int>; 
-  isMuonAllArbitrated  = new vector<int>; 
+  isGlobalMuon        = new vector<int>;	  
+  isTrackerMuon	      = new vector<int>;
+  isStandAloneMuon    = new vector<int>; 
+  isMuonAllArbitrated = new vector<int>; 
+  isTMLastStationAngTight = new vector<int>; 
+  isGlobalMuonPromptTight = new vector<int>; 
 
   isEnergyValid  = new vector<int>; 
   caloCompatibility  = new vector<float>; 
@@ -1894,6 +1941,8 @@ void TrigEff::muonsInit()
   ho     = new vector<float>;
   hoS9   = new vector<float>;
 
+  //gmrEnergy            = new vector<float>;
+  //gmrDEnergy           = new vector<float>;
   gmrPt	               = new vector<float>;
   gmrEta	       = new vector<float>;
   gmrPhi	       = new vector<float>;
@@ -1931,7 +1980,8 @@ void TrigEff::muonsInit()
   gmrOuterZ            = new vector<float>;
   gmrValHits           = new vector<int>;
 
-  stdEnergy    = new vector<float>;
+  //stdEnergy    = new vector<float>;
+  //stdDEnergy   = new vector<float>;
   stdPt        = new vector<float>;
   stdEta       = new vector<float>;
   stdPhi       = new vector<float>;
@@ -1963,7 +2013,8 @@ void TrigEff::muonsInit()
   stdOuterY    = new vector<float>;
   stdOuterZ    = new vector<float>;
    
-  trkEnergy            = new vector<float>;
+  //trkEnergy            = new vector<float>;
+  //trkDEnergy           = new vector<float>;
   trkPt                = new vector<float>;
   trkEta               = new vector<float>;
   trkPhi               = new vector<float>;
@@ -2043,11 +2094,18 @@ void TrigEff::muonsInit()
       trkSegR[row][col]     = -999;
       trkSegPhi[row][col]   = -999;
       trkSegEta[row][col]   = -999;
+
+      trkSegDxDz[row][col]     = -999;
+      trkSegDyDz[row][col]     = -999;
+      trkSegDxDzErr[row][col]  = -999;
+      trkSegDyDzErr[row][col]  = -999;
     }
   // ------------------------------------------------------  
 
 
   rchCSCtype  = new vector<int>  ; 
+  rchEtaLocal = new vector<float>;     
+  rchPhiLocal = new vector<float>;     
   rchEta      = new vector<float>;     
   rchPhi      = new vector<float>;     
   rchPhi_02PI = new vector<float>;
@@ -2070,6 +2128,8 @@ void TrigEff::muonsInit()
 
   for (int row=0; row < MAX_MUONS; row++) 
     for (int col=0; col < MAX_CSC_RECHIT; col++) {
+      rchEtaMatrixLocal[row][col] = -999;
+      rchPhiMatrixLocal[row][col] = -999;
       rchEtaMatrix[row][col]     = -999;
       rchPhiMatrix[row][col]     = -999;
       rchPhi02PIMatrix[row][col] = -999;
@@ -2170,6 +2230,8 @@ void TrigEff::muonsDel() {
   vector<int>().swap(*isTrackerMuon);
   vector<int>().swap(*isStandAloneMuon); 
   vector<int>().swap(*isMuonAllArbitrated); 
+  vector<int>().swap(*isTMLastStationAngTight); 
+  vector<int>().swap(*isGlobalMuonPromptTight); 
 
   vector<int>().swap(*isEnergyValid); 
   vector<float>().swap(*caloCompatibility); 
@@ -2183,6 +2245,8 @@ void TrigEff::muonsDel() {
   vector<float>().swap(*ho);
   vector<float>().swap(*hoS9);
 
+  //vector<float>().swap(*gmrEnergy);
+  //vector<float>().swap(*gmrDEnergy);
   vector<float>().swap(*gmrPt);
   vector<float>().swap(*gmrEta);
   vector<float>().swap(*gmrPhi);
@@ -2222,7 +2286,8 @@ void TrigEff::muonsDel() {
   vector<int>().swap(*gmrValHits);
 
 
-  vector<float>().swap(*stdEnergy);
+  //vector<float>().swap(*stdEnergy);
+  //vector<float>().swap(*stdDEnergy);
   vector<float>().swap(*stdPt);
   vector<float>().swap(*stdEta);
   vector<float>().swap(*stdPhi);
@@ -2255,7 +2320,8 @@ void TrigEff::muonsDel() {
   vector<float>().swap(*stdOuterZ);
    
 
-  vector<float>().swap(*trkEnergy);
+  //vector<float>().swap(*trkEnergy);
+  //vector<float>().swap(*trkDEnergy);
   vector<float>().swap(*trkPt);
   vector<float>().swap(*trkEta);
   vector<float>().swap(*trkPhi);
@@ -2290,6 +2356,8 @@ void TrigEff::muonsDel() {
   vector<int>().swap(*trkNSegs);
 
   vector<int>  ().swap(*rchCSCtype ); 
+  vector<float>().swap(*rchEtaLocal);     
+  vector<float>().swap(*rchPhiLocal);     
   vector<float>().swap(*rchEta     );     
   vector<float>().swap(*rchPhi     );     
   vector<float>().swap(*rchPhi_02PI);
