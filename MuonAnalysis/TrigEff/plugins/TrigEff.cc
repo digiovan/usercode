@@ -39,7 +39,6 @@
 
 #include "DataFormats/MuonReco/interface/MuonSelectors.h"
 
-
 #include <cassert>
 
 using namespace trigger;
@@ -49,45 +48,18 @@ using namespace edm;
 
 TrigEff::TrigEff(const edm::ParameterSet& pset):edm::EDAnalyzer(){
   // not all these tags are useful: need some clean-up
-  genTag    = pset.getParameter<InputTag>("genTag");
   L1extraTag= pset.getParameter<InputTag>("L1extraTag");
-  Level1Tag = pset.getParameter<InputTag>("Level1Tag");
-  Level2Tag = pset.getParameter<InputTag>("Level2Tag");
-  Level3Tag = pset.getParameter<InputTag>("Level3Tag");
-  tracksTag = pset.getParameter<InputTag>("tracksTag");
   muonsTag  = pset.getParameter<InputTag>("muonsTag");
-  saMuonsTag= pset.getParameter<InputTag>("saMuonsTag");
-  eta_cut   = pset.getParameter<double>("eta_cut");
-  pt_cut    = pset.getParameter<double>("pt_cut");
   outputFile= pset.getParameter<string>("outputFile");
-  matching_cone  = pset.getParameter<double>("matching_cone");
-  TriggerEventTag= pset.getParameter<InputTag>("TriggerEventTag");
-  HLTriggerTag = pset.getParameter<InputTag>("HLTriggerTag");
 
   csctfTag      = pset.getParameter<InputTag>("csctfTag");
   csctfLctsTag  = pset.getParameter<InputTag>("csctfLctsTag");
 
-  minvLow  = pset.getParameter<double>("minvLow");
-  minvHigh = pset.getParameter<double>("minvHigh");
-   
-  // snippet from HLTEventAnalyzerRaw
-  // unfortunately HLTEventAnalyzerRaw is not used in the production datasets
-  // but only in RelVal or you need to produce them yourself
-  // why CMS does not want to store l2 info?
-  processName_ = pset.getParameter<std::string>("processName");
-  triggerName_ = pset.getParameter<std::string>("triggerName");
-  triggerResultsTag_ = pset.getParameter<edm::InputTag>("triggerResults");
-  triggerEventWithRefsTag_ = pset.getParameter<edm::InputTag>("triggerEventWithRefs");
-  //
- 
+  cscSegTag = pset.getParameter<InputTag>("cscSegTag");
+
   // L1GTUtils
   m_nameAlgTechTrig = pset.getParameter<std::string> ("AlgorithmName");
-  //
-  
-  // get the module name you are interested in looking into
-  level2module = pset.getParameter<string>("level2module");
-  level3module = pset.getParameter<string>("level3module");
-  
+    
   // printLevel
   // -1 - No printout
   //  0 - only skipped collection
@@ -269,29 +241,6 @@ TrigEff::TrigEff(const edm::ParameterSet& pset):edm::EDAnalyzer(){
   recoMuons->Branch("trkSegDxDzErr" , &trkSegDxDzErr , "trkSegDxDzErr[muonSize][100]/F");
   recoMuons->Branch("trkSegDyDzErr" , &trkSegDyDzErr , "trkSegDyDzErr[muonSize][100]/F");
 
-//   recoMuons->Branch("trkNSegs"           , &trkNSegs           );
-//   recoMuons->Branch("trkSegChamberId"    , &trkSegChamberId    );
-//   recoMuons->Branch("trkSegRing"         , &trkSegRing         );
-//   recoMuons->Branch("trkSegStation"      , &trkSegStation      );
-//   recoMuons->Branch("trkSegEndcap"       , &trkSegEndcap       );
-//   recoMuons->Branch("trkSegTriggerSector", &trkSegTriggerSector);
-//   recoMuons->Branch("trkSegTriggerCscId" , &trkSegTriggerCscId );
-//   recoMuons->Branch("trkSegXfromMatch"   , &trkSegXfromMatch   );
-//   recoMuons->Branch("trkSegYfromMatch"   , &trkSegYfromMatch   );
-//   recoMuons->Branch("trkSegZfromMatch"   , &trkSegZfromMatch   );
-//   recoMuons->Branch("trkSegRfromMatch"   , &trkSegRfromMatch   );
-//   recoMuons->Branch("trkSegPhifromMatch" , &trkSegPhifromMatch );
-//   recoMuons->Branch("trkSegEtafromMatch" , &trkSegEtafromMatch );
-
-//   //segment
-//   recoMuons->Branch("trkSegIsArb", &trkSegIsArb);
-//   recoMuons->Branch("trkSegX"    , &trkSegX    );
-//   recoMuons->Branch("trkSegY"    , &trkSegY    );
-//   recoMuons->Branch("trkSegZ"    , &trkSegZ    );
-//   recoMuons->Branch("trkSegR"    , &trkSegR    );
-//   recoMuons->Branch("trkSegPhi"  , &trkSegPhi  );
-//  recoMuons->Branch("trkSegEta"  , &trkSegEta  );
-
   //---------------------------------------------------------------------
   // RECHIT information: only for standalone/global muons!
   //---------------------------------------------------------------------
@@ -319,16 +268,6 @@ TrigEff::TrigEff(const edm::ParameterSet& pset):edm::EDAnalyzer(){
   recoMuons->Branch("rchRingMatrix"   , rchRingMatrix   , "rchRingMatrix[muonSize][35]/I");
   recoMuons->Branch("rchLayerMatrix"  , rchLayerMatrix  , "rchLayerMatrix[muonSize][35]/I");
   recoMuons->Branch("rchTypeMatrix"   , rchTypeMatrix   , "rchTypeMatrix[muonSize][35]/I");
-   
-//   recoMuons->Branch("rchMuonSize",      &rchMuonSize     );
-//   recoMuons->Branch("rchEtaMatrix"    , &rchEtaMatrix    );
-//   recoMuons->Branch("rchPhiMatrix"    , &rchPhiMatrix    );
-//   recoMuons->Branch("rchPhi02PIMatrix", &rchPhi02PIMatrix);
-//   recoMuons->Branch("rchStationMatrix", &rchStationMatrix);
-//   recoMuons->Branch("rchChamberMatrix", &rchChamberMatrix);
-//   recoMuons->Branch("rchRingMatrix"   , &rchRingMatrix   );
-//   recoMuons->Branch("rchLayerMatrix"  , &rchLayerMatrix  );
-//   recoMuons->Branch("rchTypeMatrix"   , &rchTypeMatrix   );
    
   //--------------------------------------------------------------------- 
   // old format: keep it until you are sure the TMatrixF works
@@ -371,60 +310,23 @@ TrigEff::TrigEff(const edm::ParameterSet& pset):edm::EDAnalyzer(){
   recoMuons->Branch(  "muons_z_me3",  &muons_z_me3);
   recoMuons->Branch("muons_phi_me3",&muons_phi_me3);
   recoMuons->Branch("muons_eta_me3",&muons_eta_me3);
-   
-//   // propagation to ME1/1
-//   recoMuons->Branch(  "muons_x_mep11",  &muons_x_mep11);
-//   recoMuons->Branch(  "muons_y_mep11",  &muons_y_mep11);
-//   recoMuons->Branch(  "muons_z_mep11",  &muons_z_mep11);
-//   recoMuons->Branch("muons_phi_mep11",&muons_phi_mep11);
-//   recoMuons->Branch("muons_eta_mep11",&muons_eta_mep11);
 
-//   recoMuons->Branch(  "muons_x_mem11",  &muons_x_mem11);
-//   recoMuons->Branch(  "muons_y_mem11",  &muons_y_mem11);
-//   recoMuons->Branch(  "muons_z_mem11",  &muons_z_mem11);
-//   recoMuons->Branch("muons_phi_mem11",&muons_phi_mem11);
-//   recoMuons->Branch("muons_eta_mem11",&muons_eta_mem11);
-
-//   // propagation to ME1
-//   recoMuons->Branch(  "muons_x_mep1",  &muons_x_mep1);
-//   recoMuons->Branch(  "muons_y_mep1",  &muons_y_mep1);
-//   recoMuons->Branch(  "muons_z_mep1",  &muons_z_mep1);
-//   recoMuons->Branch("muons_phi_mep1",&muons_phi_mep1);
-//   recoMuons->Branch("muons_eta_mep1",&muons_eta_mep1);
-
-//   recoMuons->Branch(  "muons_x_mem1",  &muons_x_mem1);
-//   recoMuons->Branch(  "muons_y_mem1",  &muons_y_mem1);
-//   recoMuons->Branch(  "muons_z_mem1",  &muons_z_mem1);
-//   recoMuons->Branch("muons_phi_mem1",&muons_phi_mem1);
-//   recoMuons->Branch("muons_eta_mem1",&muons_eta_mem1);
-
-//   // propagation to ME2
-//   recoMuons->Branch(  "muons_x_mep2",  &muons_x_mep2);
-//   recoMuons->Branch(  "muons_y_mep2",  &muons_y_mep2);
-//   recoMuons->Branch(  "muons_z_mep2",  &muons_z_mep2);
-//   recoMuons->Branch("muons_phi_mep2",&muons_phi_mep2);
-//   recoMuons->Branch("muons_eta_mep2",&muons_eta_mep2);
-
-//   recoMuons->Branch(  "muons_x_mem2",  &muons_x_mem2);
-//   recoMuons->Branch(  "muons_y_mem2",  &muons_y_mem2);
-//   recoMuons->Branch(  "muons_z_mem2",  &muons_z_mem2);
-//   recoMuons->Branch("muons_phi_mem2",&muons_phi_mem2);
-//   recoMuons->Branch("muons_eta_mem2",&muons_eta_mem2);
-   
-//   // propagation to ME3
-//   recoMuons->Branch(  "muons_x_mep3",  &muons_x_mep3);
-//   recoMuons->Branch(  "muons_y_mep3",  &muons_y_mep3);
-//   recoMuons->Branch(  "muons_z_mep3",  &muons_z_mep3);
-//   recoMuons->Branch("muons_phi_mep3",&muons_phi_mep3);
-//   recoMuons->Branch("muons_eta_mep3",&muons_eta_mep3);
-   
-//   recoMuons->Branch(  "muons_x_mem3",  &muons_x_mem3);
-//   recoMuons->Branch(  "muons_y_mem3",  &muons_y_mem3);
-//   recoMuons->Branch(  "muons_z_mem3",  &muons_z_mem3);
-//   recoMuons->Branch("muons_phi_mem3",&muons_phi_mem3);
-//   recoMuons->Branch("muons_eta_mem3",&muons_eta_mem3);
   //---------------------------------------------------------------------
+  // segment information
+  //---------------------------------------------------------------------
+  recoMuons->Branch("segsSize"     ,&segsSize     ,"segsSize/I");
+  recoMuons->Branch("cscsegs_loc_x",&cscsegs_loc_x);
+  recoMuons->Branch("cscsegs_loc_y",&cscsegs_loc_y);
+  recoMuons->Branch("cscsegs_loc_z",&cscsegs_loc_z);
 
+  recoMuons->Branch("cscsegs_loc_theta",&cscsegs_loc_theta);
+  recoMuons->Branch("cscsegs_loc_eta",&cscsegs_loc_eta);
+  recoMuons->Branch("cscsegs_loc_phi",&cscsegs_loc_phi);
+
+  recoMuons->Branch("cscsegs_endcap" ,&cscsegs_endcap );
+  recoMuons->Branch("cscsegs_station",&cscsegs_station);
+  recoMuons->Branch("cscsegs_ring"   ,&cscsegs_ring   );
+  recoMuons->Branch("cscsegs_chamber",&cscsegs_chamber);
    
   //---------------------------------------------------------------------
   // l1 extra muon collection booking
@@ -578,25 +480,6 @@ TrigEff::~TrigEff(void){
 // analyze
 void TrigEff::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup){
 
-
-//   Handle<GenParticleCollection> genParticles;
-//   if( genTag.label() != "null" ) iEvent.getByLabel(genTag,genParticles);
-
-//   // Find generated muons
-//   vector<GenParticleRef> genMuons;
-//   if( genParticles.isValid() ) {
-//     for(size_t index=0; index<genParticles->size(); index++){
-//       const Candidate & particle = (*genParticles)[index];
-//       // Look for stable muons:
-//       if( abs(particle.pdgId())==13 && particle.status()==1 ) {
-//         genMuons.push_back( GenParticleRef(genParticles, index) );
-//       }
-//     }
-//   }else {
-//     if (printLevel > -1)
-//       cout<<"Empty generator collection ... skipping"<<endl; 
-//   }
-
   //Get the Magnetic field from the setup
   iSetup.get<IdealMagneticFieldRecord>().get(theBField);
   // Get the GlobalTrackingGeometry from the setup
@@ -619,7 +502,12 @@ void TrigEff::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup){
   Bx    = iEvent.bunchCrossing();   //overwritten by EVM info until fixed by fw
   Lumi  = iEvent.luminosityBlock();
   Orbit = iEvent.orbitNumber();     //overwritten by EVM info until fixed by fw
-  
+ 
+  //GP start
+  // Get the CSC Geometry 
+  iSetup.get<MuonGeometryRecord>().get(cscGeom);
+  //GP end  
+ 
   // ============================================================================
   // fill the reco muon block
   // Second: get global muons, stand alone muons, and track
@@ -631,14 +519,20 @@ void TrigEff::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup){
 
     muonsInit();
 
-    //GP start
-    // Get the CSC Geometry 
-    iSetup.get<MuonGeometryRecord>().get(cscGeom);
-    //GP end  
-
     //fill the muons
     fillMuons(muons);
-      
+  
+    // ============================================================================
+    //
+    // look at SEGMENTs (from the CSC Validation, A. Kubik)
+    //
+    // ============================================================================
+    // get CSC segment collection
+    edm::Handle<CSCSegmentCollection> cscSegments;
+    //cscSegTag = cms.InputTag("cscSegments"),
+    if( cscSegTag.label() != "null" ) iEvent.getByLabel(cscSegTag, cscSegments);
+    if( cscSegments.isValid()) fillSegments(cscSegments, cscGeom);
+    
     recoMuons->Fill();
     muonsDel();
   }
@@ -754,8 +648,6 @@ void TrigEff::fillMuons(const edm::Handle<reco::MuonCollection> muons)
   
   // Once you know how many muons we have in the event,
   // we resize the rchEtaList and rchPhiList
-  
-  
   nMu_nCscRchHits = muonSize * MAX_CSC_RECHIT;
   if (printLevel > 0) 
     cout << "nMu_nCscRchHits: " << nMu_nCscRchHits << endl;
@@ -1259,296 +1151,7 @@ void TrigEff::fillMuons(const edm::Handle<reco::MuonCollection> muons)
       muons_phi_me3->push_back(-999);
       muons_eta_me3->push_back(-999);
     }
-    
 
-    /*
-    // ... to ME1/1
-    // track at ME+1/1 surface, 5.85 m - extrapolation
-    tsos = surfExtrapTrkSam(trackRef, 585);  
-    if (tsos.isValid()) {
-      double xx = tsos.globalPosition().x();
-      double yy = tsos.globalPosition().y();
-      double zz = tsos.globalPosition().z();
-      
-      muons_x_mep11->push_back(xx);	
-      muons_y_mep11->push_back(yy);	
-      muons_z_mep11->push_back(zz);	
-
-      double rr = sqrt(xx*xx + yy*yy);
-      double cosphi = xx/rr;
-      
-      if (yy>=0) muons_phi_mep11->push_back(acos(cosphi));
-      else       muons_phi_mep11->push_back(2*PI-acos(cosphi));
-
-    
-      double abspseta = -log( tan( atan(fabs(rr/zz))/2.0 ) );
-      if (zz>=0) muons_eta_mep11->push_back(abspseta);
-      else       muons_eta_mep11->push_back(-abspseta);
-
-      if (printLevel>0) {
-        cout<<"I am projection the track to the ME+1/1 surface" << endl;
-        cout << "muons_x_mep11:" << xx << endl;
-        cout << "muons_y_mep11:" << yy << endl;
-        cout << "muons_z_mep11:" << zz << endl;      
-        if (yy>=0) cout << "muons_phi_mep11:" << acos(cosphi) << endl;
-        else       cout << "muons_phi_mep11:" << 2*PI-acos(cosphi) << endl;        
-        if (zz>=0) cout << "muons_eta_mep11:" <<  abspseta << endl;
-        else       cout << "muons_eta_mep11:" << -abspseta << endl;
-      }
-      
-    }
-
-    // track at ME-1/1 surface, -5.85 m - extrapolation
-    tsos = surfExtrapTrkSam(trackRef, -585);  
-    if (tsos.isValid()) {
-      double xx = tsos.globalPosition().x();
-      double yy = tsos.globalPosition().y();
-      double zz = tsos.globalPosition().z();
-      
-      muons_x_mem11->push_back(xx);	
-      muons_y_mem11->push_back(yy);	
-      muons_z_mem11->push_back(zz);	
-
-      double rr = sqrt(xx*xx + yy*yy);
-      double cosphi = xx/rr;
-      
-      if (yy>=0) muons_phi_mem11->push_back(acos(cosphi));
-      else       muons_phi_mem11->push_back(2*PI-acos(cosphi));
-
-    
-      double abspseta = -log( tan( atan(fabs(rr/zz))/2.0 ) );
-      if (zz>=0) muons_eta_mem11->push_back(abspseta);
-      else       muons_eta_mem11->push_back(-abspseta);
-
-      if (printLevel>0) {
-        cout<<"I am projection the track to the ME-1/1 surface" << endl;
-        cout << "muons_x_mem11:" << xx << endl;
-        cout << "muons_y_mem11:" << yy << endl;
-        cout << "muons_z_mem11:" << zz << endl;      
-        if (yy>=0) cout << "muons_phi_mem11:" << acos(cosphi) << endl;
-        else       cout << "muons_phi_mem11:" << 2*PI-acos(cosphi) << endl;        
-        if (zz>=0) cout << "muons_eta_mem11:" <<  abspseta << endl;
-        else       cout << "muons_eta_mem11:" << -abspseta << endl;
-      }
-      
-    }
-    
-    // ... to ME1
-    // track at ME+1 surface, 6.15 m - extrapolation
-    tsos = surfExtrapTrkSam(trackRef, 615);  
-    if (tsos.isValid()) {
-      double xx = tsos.globalPosition().x();
-      double yy = tsos.globalPosition().y();
-      double zz = tsos.globalPosition().z();
-      
-      muons_x_mep1->push_back(xx);	
-      muons_y_mep1->push_back(yy);	
-      muons_z_mep1->push_back(zz);	
-
-      double rr = sqrt(xx*xx + yy*yy);
-      double cosphi = xx/rr;
-      
-      if (yy>=0) muons_phi_mep1->push_back(acos(cosphi));
-      else       muons_phi_mep1->push_back(2*PI-acos(cosphi));
-
-    
-      double abspseta = -log( tan( atan(fabs(rr/zz))/2.0 ) );
-      if (zz>=0) muons_eta_mep1->push_back(abspseta);
-      else       muons_eta_mep1->push_back(-abspseta);
-
-      if (printLevel>0) {
-        cout<<"I am projection the track to the ME+1/(2-3) surface" << endl;
-        cout << "muons_x_mep1:" << xx << endl;
-        cout << "muons_y_mep1:" << yy << endl;
-        cout << "muons_z_mep1:" << zz << endl;      
-        if (yy>=0) cout << "muons_phi_mep1:" << acos(cosphi) << endl;
-        else       cout << "muons_phi_mep1:" << 2*PI-acos(cosphi) << endl;        
-        if (zz>=0) cout << "muons_eta_mep1:" <<  abspseta << endl;
-        else       cout << "muons_eta_mep1:" << -abspseta << endl;
-      }
-      
-    }
-
-    // track at ME-1 surface, -7.1 m - extrapolation
-    tsos = surfExtrapTrkSam(trackRef, -615);  
-    if (tsos.isValid()) {
-      double xx = tsos.globalPosition().x();
-      double yy = tsos.globalPosition().y();
-      double zz = tsos.globalPosition().z();
-      
-      muons_x_mem1->push_back(xx);	
-      muons_y_mem1->push_back(yy);	
-      muons_z_mem1->push_back(zz);	
-
-      double rr = sqrt(xx*xx + yy*yy);
-      double cosphi = xx/rr;
-      
-      if (yy>=0) muons_phi_mem1->push_back(acos(cosphi));
-      else       muons_phi_mem1->push_back(2*PI-acos(cosphi));
-
-    
-      double abspseta = -log( tan( atan(fabs(rr/zz))/2.0 ) );
-      if (zz>=0) muons_eta_mem1->push_back(abspseta);
-      else       muons_eta_mem1->push_back(-abspseta);
-
-      if (printLevel>0) {
-        cout<<"I am projection the track to the ME-1/(2-3) surface" << endl;
-        cout << "muons_x_mem1:" << xx << endl;
-        cout << "muons_y_mem1:" << yy << endl;
-        cout << "muons_z_mem1:" << zz << endl;      
-        if (yy>=0) cout << "muons_phi_mem1:" << acos(cosphi) << endl;
-        else       cout << "muons_phi_mem1:" << 2*PI-acos(cosphi) << endl;        
-        if (zz>=0) cout << "muons_eta_mem1:" <<  abspseta << endl;
-        else       cout << "muons_eta_mem1:" << -abspseta << endl;
-      }
-      
-    }
-
-
-    // ... to ME2
-    // track at ME+2 surface, 8.30 m - extrapolation
-    tsos = surfExtrapTrkSam(trackRef, 830);  
-    if (tsos.isValid()) {
-      double xx = tsos.globalPosition().x();
-      double yy = tsos.globalPosition().y();
-      double zz = tsos.globalPosition().z();
-      
-      muons_x_mep2->push_back(xx);	
-      muons_y_mep2->push_back(yy);	
-      muons_z_mep2->push_back(zz);	
-
-      double rr = sqrt(xx*xx + yy*yy);
-      double cosphi = xx/rr;
-      
-      if (yy>=0) muons_phi_mep2->push_back(acos(cosphi));
-      else       muons_phi_mep2->push_back(2*PI-acos(cosphi));
-
-    
-      double abspseta = -log( tan( atan(fabs(rr/zz))/2.0 ) );
-      if (zz>=0) muons_eta_mep2->push_back(abspseta);
-      else       muons_eta_mep2->push_back(-abspseta);
-
-      if (printLevel>0) {
-        cout<<"I am projection the track to the ME+2 surface" << endl;
-        cout << "muons_x_mep2:" << xx << endl;
-        cout << "muons_y_mep2:" << yy << endl;
-        cout << "muons_z_mep2:" << zz << endl;      
-        if (yy>=0) cout << "muons_phi_mep2:" << acos(cosphi) << endl;
-        else       cout << "muons_phi_mep2:" << 2*PI-acos(cosphi) << endl;        
-        if (zz>=0) cout << "muons_eta_mep2:" << abspseta << endl;
-        else       cout << "muons_eta_mep2:" << -abspseta << endl;
-      }
-      
-    }
-
-    // track at ME-2 surface, -8.3 m - extrapolation
-    tsos = surfExtrapTrkSam(trackRef, -830);  
-    if (tsos.isValid()) {
-      double xx = tsos.globalPosition().x();
-      double yy = tsos.globalPosition().y();
-      double zz = tsos.globalPosition().z();
-      
-      muons_x_mem2->push_back(xx);	
-      muons_y_mem2->push_back(yy);	
-      muons_z_mem2->push_back(zz);	
-
-      double rr = sqrt(xx*xx + yy*yy);
-      double cosphi = xx/rr;
-      
-      if (yy>=0) muons_phi_mem2->push_back(acos(cosphi));
-      else       muons_phi_mem2->push_back(2*PI-acos(cosphi));
-
-    
-      double abspseta = -log( tan( atan(fabs(rr/zz))/2.0 ) );
-      if (zz>=0) muons_eta_mem2->push_back(abspseta);
-      else       muons_eta_mem2->push_back(-abspseta);
-
-      if (printLevel>0) {
-        cout<<"I am projection the track to the ME+2 surface" << endl;
-        cout << "muons_x_mem2:" << xx << endl;
-        cout << "muons_y_mem2:" << yy << endl;
-        cout << "muons_z_mem2:" << zz << endl;      
-        if (yy>=0) cout << "muons_phi_mem2:" << acos(cosphi) << endl;
-        else       cout << "muons_phi_mem2:" << 2*PI-acos(cosphi) << endl;        
-        if (zz>=0) cout << "muons_eta_mem2:" << abspseta << endl;
-        else       cout << "muons_eta_mem2:" << -abspseta << endl;
-      }
-      
-    }
-
-
-    // ... to ME3
-    // track at ME+3 surface, 9.35 m - extrapolation
-    tsos = surfExtrapTrkSam(trackRef, 935);  
-    if (tsos.isValid()) {
-      double xx = tsos.globalPosition().x();
-      double yy = tsos.globalPosition().y();
-      double zz = tsos.globalPosition().z();
-      
-      muons_x_mep3->push_back(xx);	
-      muons_y_mep3->push_back(yy);	
-      muons_z_mep3->push_back(zz);	
-      
-      double rr = sqrt(xx*xx + yy*yy);
-      double cosphi = xx/rr;
-      
-      if (yy>=0) muons_phi_mep3->push_back(acos(cosphi));
-      else       muons_phi_mep3->push_back(2*PI-acos(cosphi));
-      
-      
-      double abspseta = -log( tan( atan(fabs(rr/zz))/2.0 ) );
-      if (zz>=0) muons_eta_mep3->push_back(abspseta);
-      else       muons_eta_mep3->push_back(-abspseta);
-      
-      if (printLevel>0) {
-        cout<<"I am projection the track to the ME+3 surface" << endl;
-        cout << "muons_x_mep3:" << xx << endl;
-        cout << "muons_y_mep3:" << yy << endl;
-        cout << "muons_z_mep3:" << zz << endl;      
-        if (yy>=0) cout << "muons_phi_mep3:" << acos(cosphi) << endl;
-        else       cout << "muons_phi_mep3:" << 2*PI-acos(cosphi) << endl;        
-        if (zz>=0) cout << "muons_eta_mep3:" << abspseta << endl;
-        else       cout << "muons_eta_mep3:" << -abspseta << endl;
-      }
-      
-    }
-    
-    // track at ME-3 surface, -9.35 m - extrapolation
-    tsos = surfExtrapTrkSam(trackRef, -935);  
-    if (tsos.isValid()) {
-      double xx = tsos.globalPosition().x();
-      double yy = tsos.globalPosition().y();
-      double zz = tsos.globalPosition().z();
-      
-      muons_x_mem3->push_back(xx);	
-      muons_y_mem3->push_back(yy);	
-      muons_z_mem3->push_back(zz);	
-
-      double rr = sqrt(xx*xx + yy*yy);
-      double cosphi = xx/rr;
-      
-      if (yy>=0) muons_phi_mem3->push_back(acos(cosphi));
-      else       muons_phi_mem3->push_back(2*PI-acos(cosphi));
-
-    
-      double abspseta = -log( tan( atan(fabs(rr/zz))/2.0 ) );
-      if (zz>=0) muons_eta_mem3->push_back(abspseta);
-      else       muons_eta_mem3->push_back(-abspseta);
-
-      if (printLevel>0) {
-        cout<<"I am projection the track to the ME-3 surface" << endl;
-        cout << "muons_x_mem3:" << xx << endl;
-        cout << "muons_y_mem3:" << yy << endl;
-        cout << "muons_z_mem3:" << zz << endl;      
-        if (yy>=0) cout << "muons_phi_mem3:" << acos(cosphi) << endl;
-        else       cout << "muons_phi_mem3:" << 2*PI-acos(cosphi) << endl;        
-        if (zz>=0) cout << "muons_eta_mem3:" << abspseta << endl;
-        else       cout << "muons_eta_mem3:" << -abspseta << endl;
-      }
-      
-    }
-    */
-    
     //---------------------------------------------------------------------
     // RECHIT information in CSC: only for standalone/global muons!
     //---------------------------------------------------------------------
@@ -2047,30 +1650,6 @@ void TrigEff::muonsInit()
   trkIsMatchValid     = new vector<int>;
 
   trkNSegs            = new vector<int>;
-  /*
-    trkSegChamberId.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
-    trkSegRing.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
-    trkSegStation.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
-    trkSegEndcap.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
-    trkSegTriggerSector.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
-    trkSegTriggerCscId.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
-
-    trkSegXfromMatch.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
-    trkSegYfromMatch.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
-    trkSegZfromMatch.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
-    trkSegRfromMatch.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
-    trkSegPhifromMatch.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
-    trkSegEtafromMatch.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
- 
-    trkSegIsArb.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
-    trkSegX.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
-    trkSegY.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
-    trkSegZ.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
-    trkSegR.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
-    trkSegPhi.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
-    trkSegEta.ResizeTo(MAX_MUONS,MAX_TRK_SEGS);
-  */
-
   for (int row=0; row < MAX_MUONS; row++) 
     for (int col=0; col < MAX_TRK_SEGS; col++) {
       trkSegChamberId[row][col] = -999;   
@@ -2115,17 +1694,6 @@ void TrigEff::muonsInit()
   rchLayer    = new vector<int>;
 
   rchMuonSize = new vector<int>;
-  /*
-    rchEtaMatrix.ResizeTo(MAX_MUONS,MAX_CSC_RECHIT);
-    rchPhiMatrix.ResizeTo(MAX_MUONS,MAX_CSC_RECHIT);
-    rchPhi02PIMatrix.ResizeTo(MAX_MUONS,MAX_CSC_RECHIT);
-    rchStationMatrix.ResizeTo(MAX_MUONS,MAX_CSC_RECHIT);
-    rchChamberMatrix.ResizeTo(MAX_MUONS,MAX_CSC_RECHIT);
-    rchRingMatrix.ResizeTo(MAX_MUONS,MAX_CSC_RECHIT);
-    rchLayerMatrix.ResizeTo(MAX_MUONS,MAX_CSC_RECHIT);
-    rchTypeMatrix.ResizeTo(MAX_MUONS,MAX_CSC_RECHIT);
-  */
-
   for (int row=0; row < MAX_MUONS; row++) 
     for (int col=0; col < MAX_CSC_RECHIT; col++) {
       rchEtaMatrixLocal[row][col] = -999;
@@ -2169,58 +1737,20 @@ void TrigEff::muonsInit()
   muons_phi_me3 = new vector<float>;
   muons_eta_me3 = new vector<float>;
                  
-//   // propagation to ME1/1
-//     muons_x_mep11 = new vector<float>;
-//     muons_y_mep11 = new vector<float>;
-//     muons_z_mep11 = new vector<float>;
-//   muons_phi_mep11 = new vector<float>;
-//   muons_eta_mep11 = new vector<float>;
-                
-//     muons_x_mem11 = new vector<float>;
-//     muons_y_mem11 = new vector<float>;
-//     muons_z_mem11 = new vector<float>;
-//   muons_phi_mem11 = new vector<float>;
-//   muons_eta_mem11 = new vector<float>;
+  // csc segments
+  cscsegs_loc_x = new vector<float>;
+  cscsegs_loc_y = new vector<float>;
+  cscsegs_loc_z = new vector<float>;
 
-//   // propagation to ME1
-//     muons_x_mep1 = new vector<float>;
-//     muons_y_mep1 = new vector<float>;
-//     muons_z_mep1 = new vector<float>;
-//   muons_phi_mep1 = new vector<float>;
-//   muons_eta_mep1 = new vector<float>;
-                 
-//     muons_x_mem1 = new vector<float>;
-//     muons_y_mem1 = new vector<float>;
-//     muons_z_mem1 = new vector<float>;
-//   muons_phi_mem1 = new vector<float>;
-//   muons_eta_mem1 = new vector<float>;
+  cscsegs_loc_theta = new vector<float>;
+  cscsegs_loc_eta = new vector<float>;
+  cscsegs_loc_phi = new vector<float>;
 
-//   // propagation to ME2
-//     muons_x_mep2 = new vector<float>;
-//     muons_y_mep2 = new vector<float>;
-//     muons_z_mep2 = new vector<float>;
-//   muons_phi_mep2 = new vector<float>;
-//   muons_eta_mep2 = new vector<float>;
-                  
-//     muons_x_mem2 = new vector<float>;
-//     muons_y_mem2 = new vector<float>;
-//     muons_z_mem2 = new vector<float>;
-//   muons_phi_mem2 = new vector<float>;
-//   muons_eta_mem2 = new vector<float>;
+  cscsegs_endcap  = new vector<int>;
+  cscsegs_station = new vector<int>;
+  cscsegs_ring    = new vector<int>;
+  cscsegs_chamber = new vector<int>;
 
-//   // propagation to ME3                 
-//     muons_x_mep3 = new vector<float>;
-//     muons_y_mep3 = new vector<float>;
-//     muons_z_mep3 = new vector<float>;
-//   muons_phi_mep3 = new vector<float>;
-//   muons_eta_mep3 = new vector<float>;
-                 
-//     muons_x_mem3 = new vector<float>;
-//     muons_y_mem3 = new vector<float>;
-//     muons_z_mem3 = new vector<float>;
-//   muons_phi_mem3 = new vector<float>;
-//   muons_eta_mem3 = new vector<float>;
-  
 }
 
 
@@ -2396,54 +1926,19 @@ void TrigEff::muonsDel() {
     vector<float>().swap(*muons_z_me3);
   vector<float>().swap(*muons_phi_me3);
   vector<float>().swap(*muons_eta_me3);
-                       
-//     vector<float>().swap(*muons_x_mep11);
-//     vector<float>().swap(*muons_y_mep11);
-//     vector<float>().swap(*muons_z_mep11);
-//   vector<float>().swap(*muons_phi_mep11);
-//   vector<float>().swap(*muons_eta_mep11);
-                                     
-//     vector<float>().swap(*muons_x_mem11);
-//     vector<float>().swap(*muons_y_mem11);
-//     vector<float>().swap(*muons_z_mem11);
-//   vector<float>().swap(*muons_phi_mem11);
-//   vector<float>().swap(*muons_eta_mem11);
 
-//     vector<float>().swap(*muons_x_mep1);
-//     vector<float>().swap(*muons_y_mep1);
-//     vector<float>().swap(*muons_z_mep1);
-//   vector<float>().swap(*muons_phi_mep1);
-//   vector<float>().swap(*muons_eta_mep1);
-                                     
-//     vector<float>().swap(*muons_x_mem1);
-//     vector<float>().swap(*muons_y_mem1);
-//     vector<float>().swap(*muons_z_mem1);
-//   vector<float>().swap(*muons_phi_mem1);
-//   vector<float>().swap(*muons_eta_mem1);
+  vector<float>().swap(*cscsegs_loc_x);
+  vector<float>().swap(*cscsegs_loc_y);
+  vector<float>().swap(*cscsegs_loc_z);
 
-//     vector<float>().swap(*muons_x_mep2);
-//     vector<float>().swap(*muons_y_mep2);
-//     vector<float>().swap(*muons_z_mep2);
-//   vector<float>().swap(*muons_phi_mep2);
-//   vector<float>().swap(*muons_eta_mep2);
-                       
-//     vector<float>().swap(*muons_x_mem2);
-//     vector<float>().swap(*muons_y_mem2);
-//     vector<float>().swap(*muons_z_mem2);
-//   vector<float>().swap(*muons_phi_mem2);
-//   vector<float>().swap(*muons_eta_mem2);
-                       
-//     vector<float>().swap(*muons_x_mep3);
-//     vector<float>().swap(*muons_y_mep3);
-//     vector<float>().swap(*muons_z_mep3);
-//   vector<float>().swap(*muons_phi_mep3);
-//   vector<float>().swap(*muons_eta_mep3);
-                       
-//     vector<float>().swap(*muons_x_mem3);
-//     vector<float>().swap(*muons_y_mem3);
-//     vector<float>().swap(*muons_z_mem3);
-//   vector<float>().swap(*muons_phi_mem3);
-//   vector<float>().swap(*muons_eta_mem3);
+  vector<float>().swap(*cscsegs_loc_theta);
+  vector<float>().swap(*cscsegs_loc_eta);
+  vector<float>().swap(*cscsegs_loc_phi);
+
+  vector<int>().swap(*cscsegs_endcap);
+  vector<int>().swap(*cscsegs_station);
+  vector<int>().swap(*cscsegs_ring);
+  vector<int>().swap(*cscsegs_chamber);
 
 }
 
@@ -3079,4 +2574,95 @@ FreeTrajectoryState TrigEff::freeTrajStateMuon(reco::TrackRef track)
   return recoStart;
 }
 
+
+void TrigEff::fillSegments(edm::Handle<CSCSegmentCollection> cscSegments, 
+                           edm::ESHandle<CSCGeometry> cscGeom){
+
+  // get CSC segment collection
+  int segsSize = cscSegments->size();
+  
+  // -----------------------
+  // loop over segments
+  // -----------------------
+  int iSegment = 0;
+  for(CSCSegmentCollection::const_iterator dSiter=cscSegments->begin(); 
+      dSiter != cscSegments->end(); 
+      dSiter++) {
+    
+    iSegment++;
+    //
+    CSCDetId id  = (CSCDetId)(*dSiter).cscDetId();
+    int kEndcap  = id.endcap();
+    int kRing    = id.ring();
+    int kStation = id.station();
+    int kChamber = id.chamber();
+      
+    cscsegs_endcap->push_back(kEndcap);
+    cscsegs_station->push_back(kRing);
+    cscsegs_ring->push_back(kStation);
+    cscsegs_chamber->push_back(kChamber);
+
+    //
+    //float chisq    = (*dSiter).chi2();
+    //int nhits      = (*dSiter).nRecHits();
+    //int nDOF       = 2*nhits-4;
+    //double chisqProb = ChiSquaredProbability( (double)chisq, nDOF );
+    LocalPoint localPos = (*dSiter).localPosition();
+    float segX = localPos.x();
+    float segY = localPos.y();
+    float segZ = localPos.z();
+      
+    cscsegs_loc_x->push_back(segX);
+    cscsegs_loc_y->push_back(segY);
+    cscsegs_loc_z->push_back(segZ);
+      
+    LocalVector segDir = (*dSiter).localDirection();
+    double theta = segDir.theta();
+    double eta   = segDir.eta();
+    double phi   = segDir.phi();
+
+    cscsegs_loc_theta->push_back(theta);
+    cscsegs_loc_eta->push_back(eta);
+    cscsegs_loc_phi->push_back(phi);
+
+
+    if (printLevel>0) {
+      cout << "iSegment: " << iSegment << endl;
+      cout << "kEndcap : "<< kEndcap  << endl;
+      cout << "kRing   : "<< kRing    << endl;
+      cout << "kStation: "<< kStation << endl;
+      cout << "kChamber: "<< kChamber << endl;
+      cout << "segX: "<< segX << endl;
+      cout << "segY: "<< segY << endl;
+      cout << "segZ: "<< segZ << endl;
+      cout << "theta: "<< theta << endl;
+      cout << "eta: "  << eta   << endl;
+      cout << "phi: "  << phi   << endl;
+    }
+
+    // not used now, but maybe this snippet will turn to be useful later
+    // global poisition
+    //     // global transformation
+    //     float globX = 0.;
+    //     float globY = 0.;
+    //     float globZ = 0.;
+    //     float globpPhi = 0.;
+    //     float globR = 0.;
+    //     float globTheta = 0.;
+    //     float globPhi   = 0.;
+    //     const CSCChamber* cscchamber = cscGeom->chamber(id);
+    //     if (cscchamber) {
+    //       GlobalPoint globalPosition = cscchamber->toGlobal(localPos);
+    //       globX = globalPosition.x();
+    //       globY = globalPosition.y();
+    //       globZ = globalPosition.z();
+    //       globpPhi =  globalPosition.phi();
+    //       globR   =  sqrt(globX*globX + globY*globY);
+    //       GlobalVector globalDirection = cscchamber->toGlobal(segDir);
+    //       globTheta = globalDirection.theta();
+    //       globPhi   = globalDirection.phi();
+    //    }
+  }
+}
+ 
 

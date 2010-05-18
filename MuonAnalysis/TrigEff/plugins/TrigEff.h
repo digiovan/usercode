@@ -71,6 +71,10 @@
 #include "TMatrixF.h"
 #include "TMatrixD.h"
 
+#include "DataFormats/CSCRecHit/interface/CSCSegmentCollection.h"
+
+
+
 //---------------------------------------------------------------------------
 #include "TMath.h"
 #define PI TMath::Pi()
@@ -91,17 +95,8 @@ using namespace edm;
 
 class TrigEff : public edm::EDAnalyzer {
 private:
-    edm::InputTag genTag;
     edm::InputTag L1extraTag;
-    edm::InputTag Level1Tag;
-    edm::InputTag Level2Tag;
-    edm::InputTag Level3Tag;
-    edm::InputTag tracksTag;
     edm::InputTag muonsTag;
-    edm::InputTag saMuonsTag;
-    edm::InputTag TriggerEventTag;
-    edm::InputTag HLTriggerTag;
-    double eta_cut, pt_cut, matching_cone;
     std::string outputFile;
     std::string level2module;
     std::string level3module;
@@ -109,8 +104,7 @@ private:
     edm::InputTag csctfTag;
     edm::InputTag csctfLctsTag;
 
-    // to Remove
-    edm::InputTag gpTag;
+    edm::InputTag cscSegTag;
 
     //---------------------------------------------------------------------
     // Default global muon collection
@@ -261,28 +255,6 @@ private:
 
     //segment
     std::vector<int>* trkNSegs;
-    /*
-      TMatrixF trkSegChamberId; 
-      TMatrixF trkSegRing;    
-      TMatrixF trkSegStation; 
-      TMatrixF trkSegEndcap;  
-      TMatrixF trkSegTriggerSector;
-      TMatrixF trkSegTriggerCscId; 
-      TMatrixF trkSegXfromMatch;
-      TMatrixF trkSegYfromMatch;
-      TMatrixF trkSegZfromMatch;
-      TMatrixF trkSegRfromMatch;
-      TMatrixF trkSegPhifromMatch;
-      TMatrixF trkSegEtafromMatch;
-      
-      TMatrixF trkSegIsArb;
-      TMatrixF trkSegX;
-      TMatrixF trkSegY;
-      TMatrixF trkSegZ;
-      TMatrixF trkSegR;
-      TMatrixF trkSegPhi;
-      TMatrixF trkSegEta;
-    */
     int trkSegChamberId[MAX_MUONS][MAX_TRK_SEGS]; 
     int trkSegRing[MAX_MUONS][MAX_TRK_SEGS];    
     int trkSegStation[MAX_MUONS][MAX_TRK_SEGS]; 
@@ -324,16 +296,6 @@ private:
     std::vector<int>*   rchLayer;
     
     std::vector<int>* rchMuonSize;//# rechits per muon
-    /*
-      TMatrixF     rchEtaMatrix;
-      TMatrixF     rchPhiMatrix;
-      TMatrixF     rchPhi02PIMatrix;
-      TMatrixF     rchStationMatrix;
-      TMatrixF     rchChamberMatrix;
-      TMatrixF     rchRingMatrix;
-      TMatrixF     rchLayerMatrix;
-      TMatrixF     rchTypeMatrix;
-    */
     float rchEtaMatrixLocal[MAX_MUONS][MAX_CSC_RECHIT];
     float rchPhiMatrixLocal[MAX_MUONS][MAX_CSC_RECHIT];
     float rchEtaMatrix[MAX_MUONS][MAX_CSC_RECHIT];
@@ -386,59 +348,26 @@ private:
     std::vector<float>*  muons_phi_me3;
     std::vector<float>*  muons_eta_me3;
                                  
-/*     // propagation to ME1/1 */
-/*     std::vector<float>*    muons_x_mep11; */
-/*     std::vector<float>*    muons_y_mep11; */
-/*     std::vector<float>*    muons_z_mep11; */
-/*     std::vector<float>*  muons_phi_mep11; */
-/*     std::vector<float>*  muons_eta_mep11; */
-                                 
-/*     std::vector<float>*    muons_x_mem11; */
-/*     std::vector<float>*    muons_y_mem11; */
-/*     std::vector<float>*    muons_z_mem11; */
-/*     std::vector<float>*  muons_phi_mem11; */
-/*     std::vector<float>*  muons_eta_mem11; */
-
-/*     // propagation to ME1 */
-/*     std::vector<float>*    muons_x_mep1; */
-/*     std::vector<float>*    muons_y_mep1; */
-/*     std::vector<float>*    muons_z_mep1; */
-/*     std::vector<float>*  muons_phi_mep1; */
-/*     std::vector<float>*  muons_eta_mep1; */
-                                 
-/*     std::vector<float>*    muons_x_mem1; */
-/*     std::vector<float>*    muons_y_mem1; */
-/*     std::vector<float>*    muons_z_mem1; */
-/*     std::vector<float>*  muons_phi_mem1; */
-/*     std::vector<float>*  muons_eta_mem1; */
-
-/*     // propagation to ME2 */
-/*     std::vector<float>*    muons_x_mep2; */
-/*     std::vector<float>*    muons_y_mep2; */
-/*     std::vector<float>*    muons_z_mep2; */
-/*     std::vector<float>*  muons_phi_mep2; */
-/*     std::vector<float>*  muons_eta_mep2; */
-      
-/*     std::vector<float>*    muons_x_mem2; */
-/*     std::vector<float>*    muons_y_mem2; */
-/*     std::vector<float>*    muons_z_mem2; */
-/*     std::vector<float>*  muons_phi_mem2; */
-/*     std::vector<float>*  muons_eta_mem2; */
-
-/*     // propagation to ME3 */
-/*     std::vector<float>*    muons_x_mep3; */
-/*     std::vector<float>*    muons_y_mep3; */
-/*     std::vector<float>*    muons_z_mep3; */
-/*     std::vector<float>*  muons_phi_mep3; */
-/*     std::vector<float>*  muons_eta_mep3; */
-                                 
-/*     std::vector<float>*    muons_x_mem3; */
-/*     std::vector<float>*    muons_y_mem3; */
-/*     std::vector<float>*    muons_z_mem3; */
-/*     std::vector<float>*  muons_phi_mem3; */
-/*     std::vector<float>*  muons_eta_mem3; */
+    //---------------------------------------------------------------------
+    // segment information
     //---------------------------------------------------------------------
 
+    int segsSize; 
+    std::vector<float>* cscsegs_loc_x;
+    std::vector<float>* cscsegs_loc_y;
+    std::vector<float>* cscsegs_loc_z;
+
+    std::vector<float>* cscsegs_loc_theta;
+    std::vector<float>* cscsegs_loc_eta;
+    std::vector<float>* cscsegs_loc_phi;
+
+    std::vector<int>* cscsegs_endcap;
+    std::vector<int>* cscsegs_station;
+    std::vector<int>* cscsegs_ring;
+    std::vector<int>* cscsegs_chamber;
+
+    void  fillSegments(edm::Handle<CSCSegmentCollection> cscSegments, 
+                       edm::ESHandle<CSCGeometry> cscGeom);
 
     //---------------------------------------------------------------------
     // l1 extra muon collection
@@ -562,71 +491,17 @@ private:
 
 
     //---------------------------------------------------------------------
-
-    //snippet from HLTEventAnalyzerRAW
-    /// module config parameters
-    std::string   processName_;
-    std::string   triggerName_;
-    edm::InputTag triggerResultsTag_;
-    edm::InputTag triggerEventWithRefsTag_;
-    
-    /// additional class data memebers
-    edm::Handle<edm::TriggerResults>           triggerResultsHandle_;
-    edm::Handle<trigger::TriggerEventWithRefs> triggerEventWithRefsHandle_;
-    HLTConfigProvider hltConfig_;
-    
-    /// payload extracted from TriggerEventWithRefs
-    trigger::Vids        muonIds_;
-    trigger::VRmuon      muonRefs_;
-    trigger::VRmuon      muonRefsl2_;
-    trigger::VRmuon      muonRefsl3_;
-    trigger::Vids        l1muonIds_;
-    trigger::VRl1muon    l1muonRefs_;
-    ////////////////////////////
-
     // L1GTUtils
     L1GtUtils m_l1GtUtils;
     std::string m_nameAlgTechTrig;
-    //
-
+    
     // ttree
     TFile *file;
-    TTree *trig1, *trig2, *trig3, *trig123, *trig321, *mcTruth;
-
-    int l1trigger, l2trigger, l3trigger, trueMuonPair;
-    double etaTrg1, phiTrg1, ptTrg1;
-    double etaTrg2, phiTrg2, ptTrg2;
-    double etaTrg3, phiTrg3, ptTrg3;
-    double etaRec,  phiRec,  ptRec;
-    double dR1, dR2, dR3;
-    double minv, minv1, minv2, minv3, pt3, eta3;
-
-    double minvLow, minvHigh;
-
+    
     int printLevel;
-    char processName[200], triggerName[200];
-    int wasRun;
-    int wasAccepted;
-    int whichError;
-
+    
     virtual void analyze(const edm::Event&, const edm::EventSetup&);
     virtual void endJob(void);//{}
-
-    //virtual void analyzeTrigger(const edm::Event&, const std::string&);
-    //virtual void beginRun(edm::Run const&, edm::EventSetup const&);
-    //virtual void analyzeL1GtUtils(const edm::Event&, const edm::EventSetup&);
-
-    class TrigInfo {
-      public:
-        l1extra::L1MuonParticleCollection::const_iterator l1cand;
-        VRmuon::const_iterator l2cand;
-        VRmuon::const_iterator l3cand;
-        MuonRef tag;
-        double minv12;
-        double minv3;
-        double pt3;
-        double eta3;
-    };
 
     // The Magnetic field
     edm::ESHandle<MagneticField> theBField;
