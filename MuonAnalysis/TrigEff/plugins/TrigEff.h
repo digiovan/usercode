@@ -36,7 +36,6 @@
 #include "Geometry/CommonDetUnit/interface/GlobalTrackingGeometry.h"
 #include "Geometry/DTGeometry/interface/DTGeometry.h"
 #include "Geometry/CSCGeometry/interface/CSCGeometry.h"
-#include "Geometry/CSCGeometry/interface/CSCGeometry.h"
 #include "DataFormats/MuonDetId/interface/CSCDetId.h"
 #include "DataFormats/CSCRecHit/interface/CSCRecHit2D.h"
 #include "FWCore/Framework/interface/ESHandle.h"
@@ -82,11 +81,13 @@
 
 //---------------------------------------------------------------------------
 #define MAX_MUONS 100 
-#define MAX_CSC_RECHIT 35 // 4 stations x 6 layers + some overlap between chambers
+#define MAX_CSC_RECHIT 48 // 4 stations x 6 layers + (some overlap between chambers: added other 24 hits to be safe)
 #define MAX_TRK_SEGS 100   // max # segments to a given tracker muon
 #define MAX_CSCTF_TRK 36  // max # of CSCTF tracks per BX
 #define MAX_LCTS_PER_TRK 4  // max # of LCTS which form a CSCTF track
+#define MAX_SEGS_STD 16 // MAX number of segments which can be associated to StandAlone component of the GBL muon
 //---------------------------------------------------------------------------
+
 
 using namespace trigger;
 using namespace reco;
@@ -98,8 +99,6 @@ private:
     edm::InputTag L1extraTag;
     edm::InputTag muonsTag;
     std::string outputFile;
-    std::string level2module;
-    std::string level3module;
 
     edm::InputTag csctfTag;
     edm::InputTag csctfLctsTag;
@@ -361,6 +360,22 @@ private:
     std::vector<float>* cscsegs_loc_eta;
     std::vector<float>* cscsegs_loc_phi;
 
+    std::vector<float>* cscsegs_loc_dir_theta;
+    std::vector<float>* cscsegs_loc_dir_eta;
+    std::vector<float>* cscsegs_loc_dir_phi;
+
+    std::vector<float>* cscsegs_gbl_x;
+    std::vector<float>* cscsegs_gbl_y;
+    std::vector<float>* cscsegs_gbl_z;
+
+    std::vector<float>* cscsegs_gbl_theta;
+    std::vector<float>* cscsegs_gbl_eta;
+    std::vector<float>* cscsegs_gbl_phi;
+
+    std::vector<float>* cscsegs_gbl_dir_theta;
+    std::vector<float>* cscsegs_gbl_dir_eta;
+    std::vector<float>* cscsegs_gbl_dir_phi;
+
     std::vector<int>* cscsegs_endcap;
     std::vector<int>* cscsegs_station;
     std::vector<int>* cscsegs_ring;
@@ -369,6 +384,88 @@ private:
     void  fillSegments(edm::Handle<CSCSegmentCollection> cscSegments, 
                        edm::ESHandle<CSCGeometry> cscGeom);
 
+
+    //--------------------------------------------------------------------------
+    // Record information about segments belonging to the STD muon component
+    //--------------------------------------------------------------------------
+    // how many segments are associated to the muon candidate
+    std::vector<int>* muonNsegs; 
+
+    // segment position information, local
+    float muon_cscsegs_loc_x[MAX_MUONS][MAX_SEGS_STD];
+    float muon_cscsegs_loc_y[MAX_MUONS][MAX_SEGS_STD];
+    float muon_cscsegs_loc_eta[MAX_MUONS][MAX_SEGS_STD];
+    float muon_cscsegs_loc_phi[MAX_MUONS][MAX_SEGS_STD];
+    float muon_cscsegs_loc_dir_eta[MAX_MUONS][MAX_SEGS_STD];
+    float muon_cscsegs_loc_dir_phi[MAX_MUONS][MAX_SEGS_STD];
+
+    // segment position information, global
+    float muon_cscsegs_gbl_x[MAX_MUONS][MAX_SEGS_STD];
+    float muon_cscsegs_gbl_y[MAX_MUONS][MAX_SEGS_STD];
+    float muon_cscsegs_gbl_eta[MAX_MUONS][MAX_SEGS_STD];
+    float muon_cscsegs_gbl_phi[MAX_MUONS][MAX_SEGS_STD];
+    float muon_cscsegs_gbl_dir_eta[MAX_MUONS][MAX_SEGS_STD];
+    float muon_cscsegs_gbl_dir_phi[MAX_MUONS][MAX_SEGS_STD];
+
+    // more on segment direction
+    float muon_cscsegs_dxdz[MAX_MUONS][MAX_SEGS_STD];
+    float muon_cscsegs_dydz[MAX_MUONS][MAX_SEGS_STD];
+    float muon_cscsegs_dxdzErr[MAX_MUONS][MAX_SEGS_STD];
+    float muon_cscsegs_dydzErr[MAX_MUONS][MAX_SEGS_STD];
+
+    // general segment information
+    int muon_cscsegs_endcap[MAX_MUONS][MAX_SEGS_STD];
+    int muon_cscsegs_station[MAX_MUONS][MAX_SEGS_STD];
+    int muon_cscsegs_ring[MAX_MUONS][MAX_SEGS_STD];
+    int muon_cscsegs_chamber[MAX_MUONS][MAX_SEGS_STD];
+    int muon_cscsegs_nhits[MAX_MUONS][MAX_SEGS_STD];
+
+    // isLCTAble
+    int muon_cscsegs_islctable[MAX_MUONS][MAX_SEGS_STD];
+    int muon_cscsegs_ismatched[MAX_MUONS][MAX_SEGS_STD];
+    // lctId is the position of the lct in the all LCT collection
+    // look also in fillAllLCTs
+    int muon_cscsegs_lctId[MAX_MUONS][MAX_SEGS_STD];
+
+    // number of hits belonging to the STD fit
+    int muon_cscsegs_nmatched[MAX_MUONS][MAX_SEGS_STD];
+
+
+    // fill the variables of the segments belonging to the muon
+    void  fillSegmentsMuons ( const edm::Handle<reco::MuonCollection> muons,
+                              edm::Handle<CSCSegmentCollection> cscSegments, 
+                              edm::ESHandle<CSCGeometry> cscGeom,
+                              const edm::Handle<CSCCorrelatedLCTDigiCollection> CSCTFlcts);
+
+    // useful methods...
+    // 1) new matching code from Ivan to see if the segment is LCTAble
+    bool isLCTAble ( const CSCSegment &segment);
+    // 2) given a segment, is there any LCT in the collection which matches it?
+    bool isMatched ( const CSCSegment &segment, 
+                     edm::Handle<CSCCorrelatedLCTDigiCollection> );
+  
+    // 3) inline function for the half strip determination
+    int halfStrip ( int channel, float position ){ 
+      int retVal = 2*channel;
+      if (position < 0) retVal -=1;
+      return retVal;
+    }
+
+    // class container for the segment and number of hits matching the
+    // global muon
+    class Segment {
+    public:      
+      const CSCSegment cscsegcand;
+      int nMatchedHits;
+      Segment(const CSCSegment &seg,int nMHits):cscsegcand(seg),nMatchedHits(nMHits){};
+    };
+
+    typedef std::vector< Segment * > SegmentVector;
+    
+    // return a vector containing the segments associated to the muon
+    TrigEff::SegmentVector* SegmentsInMuon(const reco::Muon* muon, const CSCSegmentCollection* segments );
+
+  
     //---------------------------------------------------------------------
     // l1 extra muon collection
     //---------------------------------------------------------------------

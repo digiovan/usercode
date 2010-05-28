@@ -90,9 +90,9 @@ TrigEff::TrigEff(const edm::ParameterSet& pset):edm::EDAnalyzer(){
   recoMuons->Branch("isStandAloneMuon"       , &isStandAloneMuon   );
   recoMuons->Branch("isMuonAllArbitrated"    , &isMuonAllArbitrated);
   recoMuons->Branch("isTMLastStationAngTight", &isTMLastStationAngTight);
-  recoMuons->Branch("isGlobalMuonPromptTight"    , &isGlobalMuonPromptTight);
+  recoMuons->Branch("isGlobalMuonPromptTight", &isGlobalMuonPromptTight);
 
-  recoMuons->Branch("isEnergyValid", &isEnergyValid);
+  recoMuons->Branch("isEnergyValid"    , &isEnergyValid);
   recoMuons->Branch("caloCompatibility", &caloCompatibility);
   recoMuons->Branch("em",    &em    ); 
   recoMuons->Branch("emS9",  &emS9  ); 
@@ -312,7 +312,7 @@ TrigEff::TrigEff(const edm::ParameterSet& pset):edm::EDAnalyzer(){
   recoMuons->Branch("muons_eta_me3",&muons_eta_me3);
 
   //---------------------------------------------------------------------
-  // segment information
+  // all segment information
   //---------------------------------------------------------------------
   recoMuons->Branch("segsSize"     ,&segsSize     ,"segsSize/I");
   recoMuons->Branch("cscsegs_loc_x",&cscsegs_loc_x);
@@ -320,14 +320,66 @@ TrigEff::TrigEff(const edm::ParameterSet& pset):edm::EDAnalyzer(){
   recoMuons->Branch("cscsegs_loc_z",&cscsegs_loc_z);
 
   recoMuons->Branch("cscsegs_loc_theta",&cscsegs_loc_theta);
-  recoMuons->Branch("cscsegs_loc_eta",&cscsegs_loc_eta);
-  recoMuons->Branch("cscsegs_loc_phi",&cscsegs_loc_phi);
+  recoMuons->Branch("cscsegs_loc_eta",  &cscsegs_loc_eta);
+  recoMuons->Branch("cscsegs_loc_phi",  &cscsegs_loc_phi);
+
+  recoMuons->Branch("cscsegs_loc_dir_theta",&cscsegs_loc_dir_theta);
+  recoMuons->Branch("cscsegs_loc_dir_eta",  &cscsegs_loc_dir_eta);
+  recoMuons->Branch("cscsegs_loc_dir_phi",  &cscsegs_loc_dir_phi);
+
+  recoMuons->Branch("cscsegs_gbl_x",&cscsegs_gbl_x);
+  recoMuons->Branch("cscsegs_gbl_y",&cscsegs_gbl_y);
+  recoMuons->Branch("cscsegs_gbl_z",&cscsegs_gbl_z);
+
+  recoMuons->Branch("cscsegs_gbl_theta",&cscsegs_gbl_theta);
+  recoMuons->Branch("cscsegs_gbl_eta",  &cscsegs_gbl_eta);
+  recoMuons->Branch("cscsegs_gbl_phi",  &cscsegs_gbl_phi);
+
+  recoMuons->Branch("cscsegs_gbl_dir_theta",&cscsegs_gbl_dir_theta);
+  recoMuons->Branch("cscsegs_gbl_dir_eta",  &cscsegs_gbl_dir_eta);
+  recoMuons->Branch("cscsegs_gbl_dir_phi",  &cscsegs_gbl_dir_phi);
 
   recoMuons->Branch("cscsegs_endcap" ,&cscsegs_endcap );
   recoMuons->Branch("cscsegs_station",&cscsegs_station);
   recoMuons->Branch("cscsegs_ring"   ,&cscsegs_ring   );
   recoMuons->Branch("cscsegs_chamber",&cscsegs_chamber);
-   
+  
+  //---------------------------------------------------------------------
+  // segments belonging to the muon
+  //---------------------------------------------------------------------
+  recoMuons->Branch("muonNsegs",&muonNsegs);
+
+  recoMuons->Branch("muon_cscsegs_loc_x"      , muon_cscsegs_loc_x      ,"muon_cscsegs_loc_x[muonSize][16]/F");
+  recoMuons->Branch("muon_cscsegs_loc_y"      , muon_cscsegs_loc_y      ,"muon_cscsegs_loc_y[muonSize][16]/F");
+  recoMuons->Branch("muon_cscsegs_loc_eta"    , muon_cscsegs_loc_eta    ,"muon_cscsegs_loc_eta[muonSize][16]/F");
+  recoMuons->Branch("muon_cscsegs_loc_phi"    , muon_cscsegs_loc_phi    ,"muon_cscsegs_loc_phi[muonSize][16]/F");
+  recoMuons->Branch("muon_cscsegs_loc_dir_eta", muon_cscsegs_loc_dir_eta,"muon_cscsegs_loc_dir_eta[muonSize][16]/F");
+  recoMuons->Branch("muon_cscsegs_loc_dir_phi", muon_cscsegs_loc_dir_phi,"muon_cscsegs_loc_dir_phi[muonSize][16]/F");
+
+  recoMuons->Branch("muon_cscsegs_gbl_x"      , muon_cscsegs_gbl_x      ,"muon_cscsegs_gbl_x[muonSize][16]/F");
+  recoMuons->Branch("muon_cscsegs_gbl_y"      , muon_cscsegs_gbl_y      ,"muon_cscsegs_gbl_y[muonSize][16]/F");
+  recoMuons->Branch("muon_cscsegs_gbl_eta"    , muon_cscsegs_gbl_eta    ,"muon_cscsegs_gbl_eta[muonSize][16]/F");
+  recoMuons->Branch("muon_cscsegs_gbl_phi"    , muon_cscsegs_gbl_phi    ,"muon_cscsegs_gbl_phi[muonSize][16]/F");
+  recoMuons->Branch("muon_cscsegs_gbl_dir_eta", muon_cscsegs_gbl_dir_eta,"muon_cscsegs_gbl_dir_eta[muonSize][16]/F");
+  recoMuons->Branch("muon_cscsegs_gbl_dir_phi", muon_cscsegs_gbl_dir_phi,"muon_cscsegs_gbl_dir_phi[muonSize][16]/F");
+
+  recoMuons->Branch("muon_cscsegs_dxdz"   , muon_cscsegs_dxdz   ,"muon_cscsegs_dxdz[muonSize][16]/F");
+  recoMuons->Branch("muon_cscsegs_dydz"   , muon_cscsegs_dydz   ,"muon_cscsegs_dydz[muonSize][16]/F");
+  recoMuons->Branch("muon_cscsegs_dxdzErr", muon_cscsegs_dxdzErr,"muon_cscsegs_dxdzErr[muonSize][16]/F");
+  recoMuons->Branch("muon_cscsegs_dydzErr", muon_cscsegs_dydzErr,"muon_cscsegs_dydzErr[muonSize][16]/F");
+
+  recoMuons->Branch("muon_cscsegs_endcap" , muon_cscsegs_endcap ,"muon_cscsegs_endcap[muonSize][16]/I");
+  recoMuons->Branch("muon_cscsegs_station", muon_cscsegs_station,"muon_cscsegs_station[muonSize][16]/I");
+  recoMuons->Branch("muon_cscsegs_ring"   , muon_cscsegs_ring   ,"muon_cscsegs_ring[muonSize][16]/I");
+  recoMuons->Branch("muon_cscsegs_chamber", muon_cscsegs_chamber,"muon_cscsegs_chamber[muonSize][16]/I");
+  recoMuons->Branch("muon_cscsegs_nhits"  , muon_cscsegs_nhits  ,"muon_cscsegs_nhits[muonSize][16]/I");
+  
+  recoMuons->Branch("muon_cscsegs_islctable", muon_cscsegs_islctable,"muon_cscsegs_islctable[muonSize][16]/I");
+  recoMuons->Branch("muon_cscsegs_ismatched", muon_cscsegs_ismatched,"muon_cscsegs_ismatched[muonSize][16]/I");
+  recoMuons->Branch("muon_cscsegs_lctId"    , muon_cscsegs_lctId    ,"muon_cscsegs_lctId[muonSize][16]/I");
+  recoMuons->Branch("muon_cscsegs_nmatched" , muon_cscsegs_nmatched ,"muon_cscsegs_nmatched[muonSize][16]/I");
+  
+
   //---------------------------------------------------------------------
   // l1 extra muon collection booking
   //---------------------------------------------------------------------
@@ -522,21 +574,31 @@ void TrigEff::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup){
     //fill the muons
     fillMuons(muons);
   
-    // ============================================================================
+    // ==========================================================================
     //
     // look at SEGMENTs (from the CSC Validation, A. Kubik)
     //
-    // ============================================================================
+    // ==========================================================================
     // get CSC segment collection
     edm::Handle<CSCSegmentCollection> cscSegments;
     //cscSegTag = cms.InputTag("cscSegments"),
     if( cscSegTag.label() != "null" ) iEvent.getByLabel(cscSegTag, cscSegments);
     if( cscSegments.isValid()) fillSegments(cscSegments, cscGeom);
+   
+    Handle<CSCCorrelatedLCTDigiCollection> CSCTFlcts;
+    if( csctfLctsTag.label() != "null" ) 
+      iEvent.getByLabel(csctfLctsTag, CSCTFlcts);
+
+    if( cscSegments.isValid() && CSCTFlcts.isValid() ) 
+      fillSegmentsMuons(muons, cscSegments, cscGeom, CSCTFlcts);
+      
     
     recoMuons->Fill();
     muonsDel();
   }
+  
 
+  
   if (printLevel > 0) {
     cout<<"======================================================"<<endl; 
     cout<<"Level-1 extra: "<<endl;
@@ -1205,11 +1267,11 @@ void TrigEff::fillMuons(const edm::Handle<reco::MuonCollection> muons)
         LocalPoint rhitlocal = CSChit->localPosition();
 
         // for debugging purpouses
-        //if (printLevel > 0) {
-        //  cout << "rhitlocal.x="<<rhitlocal.x();
-        //  cout << "rhitlocal.y="<<rhitlocal.y();
-        //  cout << "rhitlocal.z="<<rhitlocal.z();
-        //}
+        if (printLevel > 0) {
+          cout << "rhitlocal.x="<<rhitlocal.x();
+          cout << "rhitlocal.y="<<rhitlocal.y();
+          cout << "rhitlocal.z="<<rhitlocal.z();
+        }
 
         GlobalPoint gp = GlobalPoint(0.0, 0.0, 0.0);
         
@@ -1224,7 +1286,7 @@ void TrigEff::fillMuons(const edm::Handle<reco::MuonCollection> muons)
         
         // --------------------------------------------------
         // this part has to be deprecated once we are sure of 
-        // the TMatrixF usage ;)
+        // the Matrix usage ;)
         // fill the rechits array
         rchEtaList[pos]      = gp.eta();
         rchPhiList[pos]      = gp.phi();
@@ -1304,8 +1366,11 @@ void TrigEff::fillMuons(const edm::Handle<reco::MuonCollection> muons)
       if (printLevel > 0) {
         cout << "\n######### CLOSER #########";
         cout << "\n - RCH Type: " << globalTypeRCH
+             <<     " RCH Eta Local: " << localEtaRCH	    
+             <<     " RCH Phi Local: " << localPhiRCH
              <<     " RCH Eta: "  << globalEtaRCH	    
              <<     " RCH Phi: "  << globalPhiRCH;
+
       }
       
       if ( globalPhiRCH < 0) {
@@ -1517,8 +1582,7 @@ void TrigEff::fillMuons(const edm::Handle<reco::MuonCollection> muons)
     }//isTrackerMuon
     else trkNSegs->push_back(-999);
   }
-  
-  
+
 }
 
 
@@ -1743,14 +1807,65 @@ void TrigEff::muonsInit()
   cscsegs_loc_z = new vector<float>;
 
   cscsegs_loc_theta = new vector<float>;
-  cscsegs_loc_eta = new vector<float>;
-  cscsegs_loc_phi = new vector<float>;
+  cscsegs_loc_eta   = new vector<float>;
+  cscsegs_loc_phi   = new vector<float>;
+
+  cscsegs_loc_dir_theta = new vector<float>;
+  cscsegs_loc_dir_eta   = new vector<float>;
+  cscsegs_loc_dir_phi   = new vector<float>;
+
+  cscsegs_gbl_x = new vector<float>;
+  cscsegs_gbl_y = new vector<float>;
+  cscsegs_gbl_z = new vector<float>;
+
+  cscsegs_gbl_theta = new vector<float>;
+  cscsegs_gbl_eta   = new vector<float>;
+  cscsegs_gbl_phi   = new vector<float>;
+
+  cscsegs_gbl_dir_theta = new vector<float>;
+  cscsegs_gbl_dir_eta   = new vector<float>;
+  cscsegs_gbl_dir_phi   = new vector<float>;
 
   cscsegs_endcap  = new vector<int>;
   cscsegs_station = new vector<int>;
   cscsegs_ring    = new vector<int>;
   cscsegs_chamber = new vector<int>;
 
+  muonNsegs = new std::vector<int>; 
+
+  for (int row=0; row < MAX_MUONS; row++) 
+    for (int col=0; col < MAX_SEGS_STD; col++) {
+ 
+      muon_cscsegs_loc_x[row][col] = -999;
+      muon_cscsegs_loc_y[row][col] = -999;
+      muon_cscsegs_loc_eta[row][col] = -999;
+      muon_cscsegs_loc_phi[row][col] = -999;
+      muon_cscsegs_loc_dir_eta[row][col] = -999;
+      muon_cscsegs_loc_dir_phi[row][col] = -999;
+
+      muon_cscsegs_gbl_x[row][col] = -999;
+      muon_cscsegs_gbl_y[row][col] = -999;
+      muon_cscsegs_gbl_eta[row][col] = -999;
+      muon_cscsegs_gbl_phi[row][col] = -999;
+      muon_cscsegs_gbl_dir_eta[row][col] = -999;
+      muon_cscsegs_gbl_dir_phi[row][col] = -999;
+
+      muon_cscsegs_dxdz[row][col] = -999;
+      muon_cscsegs_dydz[row][col] = -999;
+      muon_cscsegs_dxdzErr[row][col] = -999;
+      muon_cscsegs_dydzErr[row][col] = -999;
+
+      muon_cscsegs_endcap[row][col] = -999;
+      muon_cscsegs_station[row][col] = -999;
+      muon_cscsegs_ring[row][col] = -999;
+      muon_cscsegs_chamber[row][col] = -999;
+      muon_cscsegs_nhits[row][col] = -999;
+
+      muon_cscsegs_islctable[row][col] = -999;
+      muon_cscsegs_ismatched[row][col] = -999;
+      muon_cscsegs_lctId[row][col] = -999;
+      muon_cscsegs_nmatched[row][col] = -999;
+    }
 }
 
 
@@ -1935,11 +2050,28 @@ void TrigEff::muonsDel() {
   vector<float>().swap(*cscsegs_loc_eta);
   vector<float>().swap(*cscsegs_loc_phi);
 
+  vector<float>().swap(*cscsegs_loc_dir_theta);
+  vector<float>().swap(*cscsegs_loc_dir_eta);
+  vector<float>().swap(*cscsegs_loc_dir_phi);
+
+  vector<float>().swap(*cscsegs_gbl_x);
+  vector<float>().swap(*cscsegs_gbl_y);
+  vector<float>().swap(*cscsegs_gbl_z);
+
+  vector<float>().swap(*cscsegs_gbl_theta);
+  vector<float>().swap(*cscsegs_gbl_eta);
+  vector<float>().swap(*cscsegs_gbl_phi);
+
+  vector<float>().swap(*cscsegs_gbl_dir_theta);
+  vector<float>().swap(*cscsegs_gbl_dir_eta);
+  vector<float>().swap(*cscsegs_gbl_dir_phi);
+
   vector<int>().swap(*cscsegs_endcap);
   vector<int>().swap(*cscsegs_station);
   vector<int>().swap(*cscsegs_ring);
   vector<int>().swap(*cscsegs_chamber);
 
+  std::vector<int>().swap(*muonNsegs); 
 }
 
 
@@ -2580,7 +2712,8 @@ void TrigEff::fillSegments(edm::Handle<CSCSegmentCollection> cscSegments,
 
   // get CSC segment collection
   int segsSize = cscSegments->size();
-  
+  if (printLevel>0) cout << "segsSize:"<< segsSize << endl;
+
   // -----------------------
   // loop over segments
   // -----------------------
@@ -2596,7 +2729,7 @@ void TrigEff::fillSegments(edm::Handle<CSCSegmentCollection> cscSegments,
     int kRing    = id.ring();
     int kStation = id.station();
     int kChamber = id.chamber();
-      
+    
     cscsegs_endcap->push_back(kEndcap);
     cscsegs_station->push_back(kRing);
     cscsegs_ring->push_back(kStation);
@@ -2611,19 +2744,26 @@ void TrigEff::fillSegments(edm::Handle<CSCSegmentCollection> cscSegments,
     float segX = localPos.x();
     float segY = localPos.y();
     float segZ = localPos.z();
+    float segPhi = localPos.phi();
+    float segEta = localPos.eta();
+    float segTheta = localPos.theta();
       
     cscsegs_loc_x->push_back(segX);
     cscsegs_loc_y->push_back(segY);
     cscsegs_loc_z->push_back(segZ);
+
+    cscsegs_loc_theta->push_back(segTheta);
+    cscsegs_loc_eta  ->push_back(segEta);
+    cscsegs_loc_phi  ->push_back(segPhi);
       
     LocalVector segDir = (*dSiter).localDirection();
-    double theta = segDir.theta();
-    double eta   = segDir.eta();
-    double phi   = segDir.phi();
+    double dirTheta = segDir.theta();
+    double dirEta   = segDir.eta();
+    double dirPhi   = segDir.phi();
 
-    cscsegs_loc_theta->push_back(theta);
-    cscsegs_loc_eta->push_back(eta);
-    cscsegs_loc_phi->push_back(phi);
+    cscsegs_loc_dir_theta->push_back(dirTheta);
+    cscsegs_loc_dir_eta  ->push_back(dirEta);
+    cscsegs_loc_dir_phi  ->push_back(dirPhi);
 
 
     if (printLevel>0) {
@@ -2635,34 +2775,683 @@ void TrigEff::fillSegments(edm::Handle<CSCSegmentCollection> cscSegments,
       cout << "segX: "<< segX << endl;
       cout << "segY: "<< segY << endl;
       cout << "segZ: "<< segZ << endl;
-      cout << "theta: "<< theta << endl;
-      cout << "eta: "  << eta   << endl;
-      cout << "phi: "  << phi   << endl;
+      cout << "segPhi: "<< segPhi << endl;
+      cout << "segEta: "<< segEta << endl;
+      cout << "segTheta: "<< segTheta << endl;
+      cout << "dirTheta: "<< dirTheta << endl;
+      cout << "dirEta: "  << dirEta   << endl;
+      cout << "dirPhi: "  << dirPhi   << endl;
     }
 
-    // not used now, but maybe this snippet will turn to be useful later
-    // global poisition
-    //     // global transformation
-    //     float globX = 0.;
-    //     float globY = 0.;
-    //     float globZ = 0.;
-    //     float globpPhi = 0.;
-    //     float globR = 0.;
-    //     float globTheta = 0.;
-    //     float globPhi   = 0.;
-    //     const CSCChamber* cscchamber = cscGeom->chamber(id);
-    //     if (cscchamber) {
-    //       GlobalPoint globalPosition = cscchamber->toGlobal(localPos);
-    //       globX = globalPosition.x();
-    //       globY = globalPosition.y();
-    //       globZ = globalPosition.z();
-    //       globpPhi =  globalPosition.phi();
-    //       globR   =  sqrt(globX*globX + globY*globY);
-    //       GlobalVector globalDirection = cscchamber->toGlobal(segDir);
-    //       globTheta = globalDirection.theta();
-    //       globPhi   = globalDirection.phi();
-    //    }
+    // global transformation
+    float globX = 0.;
+    float globY = 0.;
+    float globZ = 0.;
+    float globSegPhi  = 0.;
+    float globSegTheta = 0.;
+    float globSegEta   = 0.;
+    float globDirPhi  = 0.;
+    float globDirTheta = 0.;
+    float globDirEta   = 0.;
+
+    
+    const CSCChamber* cscchamber = cscGeom->chamber(id);
+    if (cscchamber) {
+      GlobalPoint globalPosition = cscchamber->toGlobal(localPos);
+      globX   = globalPosition.x();
+      globY   = globalPosition.y();
+      globZ   = globalPosition.z();
+      globSegPhi   = globalPosition.phi();
+      globSegEta   = globalPosition.eta();
+      globSegTheta = globalPosition.theta();
+
+      if (printLevel>0) {
+        cout << "globX  : " << globX   << endl;
+        cout << "globY  : " << globY   << endl;
+        cout << "globZ  : " << globZ   << endl;
+        cout << "globSegPhi: " << globSegPhi << endl;
+        cout << "globSegEta: " << globSegEta << endl;
+      }
+
+      GlobalVector globalDirection = cscchamber->toGlobal(segDir);
+      globDirTheta = globalDirection.theta();
+      globDirEta   = globalDirection.eta();
+      globDirPhi   = globalDirection.phi();
+
+      cscsegs_gbl_x->push_back(globX);
+      cscsegs_gbl_y->push_back(globY);
+      cscsegs_gbl_z->push_back(globZ);
+
+      cscsegs_gbl_theta->push_back(globSegTheta);
+      cscsegs_gbl_eta  ->push_back(globSegEta  );
+      cscsegs_gbl_phi  ->push_back(globSegPhi  );
+
+      cscsegs_gbl_dir_theta->push_back(globDirTheta);
+      cscsegs_gbl_dir_eta  ->push_back(globDirEta  );
+      cscsegs_gbl_dir_phi  ->push_back(globDirPhi  );
+    } 
+    else {
+      cscsegs_gbl_x->push_back(-999);
+      cscsegs_gbl_y->push_back(-999);
+      cscsegs_gbl_z->push_back(-999);
+
+      cscsegs_gbl_theta->push_back(-999);
+      cscsegs_gbl_eta  ->push_back(-999);
+      cscsegs_gbl_phi  ->push_back(-999);
+
+      cscsegs_gbl_dir_theta->push_back(-999);
+      cscsegs_gbl_dir_eta  ->push_back(-999);
+      cscsegs_gbl_dir_phi  ->push_back(-999);
+    }
   }
 }
- 
+  
 
+// From Ivan
+bool TrigEff::isLCTAble ( const CSCSegment &segment ){
+
+  if (segment . cscDetId().ring() == 4) cout << "IsLCTAble FOUND ME11a\n";
+
+  if (segment . cscDetId().ring() == 4 ) return false;
+  if (segment . nRecHits() < 4 )         return false;
+
+  int thisStation = segment.cscDetId().station();
+  
+  int keyStrip = 999, keyWireg = 999;
+
+  const std::vector<CSCRecHit2D>& theHits = segment . specificRecHits();
+	    
+  std::vector<CSCRecHit2D>::const_iterator hitIter;
+
+  for (hitIter = theHits.begin(); hitIter!= theHits.end(); hitIter++){
+
+    if (hitIter -> cscDetId(). layer() != 3)
+      continue;
+    
+    keyStrip = halfStrip(hitIter -> channels()[1], hitIter -> positionWithinStrip() );
+    
+    keyWireg =  hitIter -> wgroups()[0];
+    
+  }	    
+
+  int alctEnvelopes[6] = { 2, 1, 0, 1, 2, 2 };
+  int clctEnvelopes[6] = { 5, 2, 0, 2, 4, 5 };
+
+
+  int hitsFidAlct = 0;
+  int hitsFidClct = 0;
+
+  for (hitIter = theHits.begin(); hitIter!= theHits.end(); hitIter++){
+
+    int thisLayer = hitIter -> cscDetId() . layer();
+
+    int delWgroup = hitIter -> wgroups()[0] - keyWireg;
+    int delStrip  = halfStrip(hitIter -> channels()[1],
+			      hitIter -> positionWithinStrip()) - keyStrip;
+    
+    if (thisLayer <=3)
+      delWgroup = -delWgroup;
+
+    if (thisStation == 3)
+      delWgroup = -delWgroup;
+
+    if (thisStation == 4)
+      delWgroup = -delWgroup;
+
+    if ( delWgroup >=0 )
+      if ( delWgroup <= alctEnvelopes[ thisLayer - 1 ] ) hitsFidAlct++;
+
+    if ( abs(delStrip)  <= clctEnvelopes[ thisLayer - 1 ] ) hitsFidClct++;
+
+  }
+
+  if ( hitsFidAlct < 4) return false;
+  if ( hitsFidClct < 4) return false;
+  
+  return true;
+
+}
+
+
+
+
+/*
+  if( segmentTag.label() != "null" ) {
+  iEvent.getByLabel(segmentTag, cscSegments);
+  if (printLevel >= 0) std::cout<<"========== Reading segments  ==========" << std::endl;
+  }    
+  
+  if( !cscSegments.isValid() ) { 
+  std::cout << "Invalid CSCSegmentCollection... skipping it" << std::endl;
+  return;
+  }
+
+  if( cscLctsTag.label() != "null" ) {
+  iEvent.getByLabel(cscLctsTag, CSCTFlcts);
+  if (printLevel > 0) std::cout<<"========== FILLING ALL LCTS RAW  ==========" << std::endl;
+  }
+  
+  if( !CSCTFlcts.isValid() ){
+  std::cout << "bad LCT collection... skipping" << std::endl;
+  return;
+  }
+
+*/
+
+void  TrigEff::fillSegmentsMuons ( const edm::Handle<reco::MuonCollection> muons,
+                                   edm::Handle<CSCSegmentCollection> cscSegments, 
+                                   edm::ESHandle<CSCGeometry> cscGeom,
+                                   const edm::Handle<CSCCorrelatedLCTDigiCollection> CSCTFlcts) {
+
+
+  if (printLevel >= 0){
+    std::cout << "\n============= fillSegmentsMuons =============\n";
+   }
+  
+  // loop over the muons
+  int whichMuon =-1;
+  for (MuonCollection::const_iterator muon=muons->begin();
+       muon!=muons->end(); muon++) {
+    
+    whichMuon++;
+    if (printLevel) cout << "whichMuon="<<whichMuon<<endl;
+    // given a muon candidate, loop over the segments and find the segments belonging
+    // to the muon and see if they are "LCTAble"
+
+    if (!muon->combinedMuon())   continue;
+    if (!muon->standAloneMuon()) continue;
+
+    // get the segments which match the muon candidate
+    SegmentVector *segVect = SegmentsInMuon( &(*muon), &(*cscSegments) );
+    
+    // debugging
+    if (printLevel>0)
+      std::cout << "segVect -> size()=" << segVect -> size() << endl;
+
+    muonNsegs->push_back( segVect -> size() );
+  
+    // sanity check
+    if (segVect -> size() == 0){
+      delete segVect; 
+      continue;
+    }
+    
+    int iSegment=-1;
+    // loop over the segments
+    for(SegmentVector::const_iterator segmentCSC = segVect -> begin();
+        segmentCSC != segVect -> end(); segmentCSC++){
+
+      iSegment++;
+
+      if ( iSegment > (MAX_SEGS_STD-1) ) {
+        std::cout << "the muon has " << iSegment+1 << ", but the MAX allowed is "
+                  << MAX_SEGS_STD << " -> Skipping the segment... " << std::endl;
+      }
+
+      LocalPoint localPos = (*segmentCSC)->cscsegcand.localPosition();
+      LocalVector  segDir = (*segmentCSC)->cscsegcand.localDirection();    
+      
+      muon_cscsegs_loc_x      [whichMuon][iSegment] = localPos.x();
+      muon_cscsegs_loc_y      [whichMuon][iSegment] = localPos.y();
+      muon_cscsegs_loc_eta    [whichMuon][iSegment] = localPos.eta();
+      muon_cscsegs_loc_phi    [whichMuon][iSegment] = localPos.phi();
+      muon_cscsegs_loc_dir_eta[whichMuon][iSegment] = segDir.eta();
+      muon_cscsegs_loc_dir_phi[whichMuon][iSegment] = segDir.phi();
+
+
+      CSCDetId id  = (CSCDetId) (*segmentCSC)->cscsegcand.cscDetId();
+        
+      const CSCChamber* cscchamber = cscGeom->chamber(id);
+   
+      if (!cscchamber) { 
+        std::cout << "cscchamber not valid" << std::endl;
+        continue;
+      }
+      
+      GlobalPoint globalPosition   = cscchamber->toGlobal(localPos);
+      GlobalVector globalDirection = cscchamber->toGlobal(segDir);      
+
+
+      muon_cscsegs_gbl_x      [whichMuon][iSegment] = globalPosition.x();
+      muon_cscsegs_gbl_y      [whichMuon][iSegment] = globalPosition.y();
+      muon_cscsegs_gbl_eta    [whichMuon][iSegment] = globalPosition.eta();
+      muon_cscsegs_gbl_phi    [whichMuon][iSegment] = globalPosition.phi();
+      muon_cscsegs_gbl_dir_eta[whichMuon][iSegment] = globalDirection.eta();
+      muon_cscsegs_gbl_dir_phi[whichMuon][iSegment] = globalDirection.phi();
+
+      cout << "GP debugging...\n";
+      cout << "kEndcap =" << id.endcap()  << endl;
+      cout << "kRing   =" << id.ring()    << endl;
+      cout << "kStation=" << id.station() << endl;
+      cout << "kChamber=" << id.chamber() << endl;
+    
+      muon_cscsegs_endcap [whichMuon][iSegment] = id.endcap(); 
+      muon_cscsegs_station[whichMuon][iSegment] = id.station();
+      muon_cscsegs_ring   [whichMuon][iSegment] = id.ring();   
+      muon_cscsegs_chamber[whichMuon][iSegment] = id.chamber();
+      muon_cscsegs_nhits  [whichMuon][iSegment] = (*segmentCSC)->cscsegcand.nRecHits();
+
+      muon_cscsegs_dxdz   [whichMuon][iSegment] = -999; //(*segmentCSC)->cscsegcand.dXdZ;
+      muon_cscsegs_dydz   [whichMuon][iSegment] = -999; //(*segmentCSC)->cscsegcand.dYdZ;
+      muon_cscsegs_dxdzErr[whichMuon][iSegment] = -999; //(*segmentCSC)->cscsegcand.dXdZErr;
+      muon_cscsegs_dydzErr[whichMuon][iSegment] = -999; //(*segmentCSC)->cscsegcand.dYdZErr;
+
+      bool isTriggerAble = isLCTAble( (*segmentCSC)->cscsegcand );
+      bool isLCTMatched  = isMatched( (*segmentCSC)->cscsegcand, CSCTFlcts );
+          
+      if (printLevel>0) {
+        std::cout << std::endl;
+        std::cout <<"segmentCSC->nMatchedHits=" 
+                  << (*segmentCSC)->nMatchedHits << std::endl; 
+        std::cout <<"isLCTAble?=" << isTriggerAble << std::endl; 
+        std::cout <<"isMatched?=" << isLCTMatched  << std::endl; 
+      }
+
+      muon_cscsegs_islctable[whichMuon][iSegment] = isTriggerAble;
+      muon_cscsegs_ismatched[whichMuon][iSegment] = isLCTMatched;
+
+      if (printLevel>0) {
+        std::cout << "muon_cscsegs_islctable[" << whichMuon << "][" << iSegment<< "]:" << muon_cscsegs_islctable[whichMuon][iSegment] << std::endl;
+        std::cout << "muon_cscsegs_ismatched[" << whichMuon << "][" << iSegment<< "]:" << muon_cscsegs_ismatched[whichMuon][iSegment] << std::endl;
+      }
+
+      int whichLCT=-999;// find the corresponding LCT in the list
+      if (isLCTMatched) {
+        
+        int iLCT=-1;
+        for(CSCCorrelatedLCTDigiCollection::DigiRangeIterator 
+              corrLct = CSCTFlcts.product()->begin(); 
+            corrLct != CSCTFlcts.product()->end()  ; corrLct++){
+          
+          iLCT++;
+      
+          CSCCorrelatedLCTDigiCollection::Range lctRange1 = 
+            CSCTFlcts.product()->get( (*segmentCSC)->cscsegcand.cscDetId() );
+          
+          CSCCorrelatedLCTDigiCollection::Range lctRange2 = 
+            CSCTFlcts.product()->get((*corrLct).first);
+        	
+          // find the matching one
+          if (lctRange1 == lctRange2) {
+            
+            whichLCT=iLCT;
+            
+            if (printLevel > 0 )
+              std::cout<< "Corresponds to LCT number:" << whichLCT << std::endl;
+          }
+
+
+        }
+      }
+
+      muon_cscsegs_lctId    [whichMuon][iSegment] = whichLCT;
+      muon_cscsegs_nmatched [whichMuon][iSegment] = (*segmentCSC)->nMatchedHits;
+
+    }
+
+    delete segVect;
+  }
+}
+
+
+
+TrigEff::SegmentVector* TrigEff::SegmentsInMuon(const reco::Muon* muon, 
+                                                const CSCSegmentCollection* segments ){
+
+  
+  TrigEff::SegmentVector *retVal = new TrigEff::SegmentVector();
+
+  
+  bool isMuonStd=false; // has the muon a standalone component
+  if (muon->combinedMuon().isNonnull() || muon->standAloneMuon().isNonnull()) 
+    isMuonStd=true;
+ 
+  // return empty vector if the muon is not interesting
+  if (!isMuonStd) return retVal;
+
+  
+  int iSegment=0;
+  //loop over the segments
+  for (CSCSegmentCollection::const_iterator segIter = segments -> begin();
+       segIter != segments -> end(); segIter++){
+
+    int nHits=segIter -> nRecHits();
+
+    if (printLevel>0) {
+      std::cout << " ======================================== " << std::endl;
+      std::cout << "Segment in CSC:" << iSegment++ << std::endl;
+      std::cout << "# segs hits:"<< nHits << std::endl;
+    }
+
+    // no need to verify the segment is in CSC. It is the default assumption in
+    // the collection ;-)
+    const std::vector<CSCRecHit2D>& theHits = segIter -> specificRecHits();
+        
+    std::vector<CSCRecHit2D>::const_iterator hitIter;
+    
+    int nMuonMatchedHits=0;
+    int iHit=0;
+    // loop over the segments hits
+    for (hitIter = theHits.begin(); hitIter!= theHits.end(); hitIter++){
+
+      if (printLevel>0) std::cout << "iHit:" << iHit++ << " , ";
+      // check it the hit will match the standalone muon component
+      bool isHitMatched=false;
+
+      
+      LocalPoint seghitlocal = hitIter -> localPosition();
+
+      double segHitX = seghitlocal.x();      
+      double segHitY = seghitlocal.y();      
+
+      if (printLevel > 0)
+        std::cout << "segHitX="<<segHitX <<  ", "
+                  << "segHitY="<<segHitY;
+        
+
+      for(trackingRecHit_iterator hit  = muon->outerTrack()->recHitsBegin(); 
+          hit != muon->outerTrack()->recHitsEnd(); 
+          hit++){
+
+
+        // some basic protection
+	if ( !((*hit)->isValid()) ) continue;
+        
+	// Hardware ID of the RecHit (in terms of wire/strips/chambers)
+	DetId detid = (*hit)->geographicalId();
+        
+	// Interested in muon systems only
+	if( detid.det() != DetId::Muon ) continue;
+
+        //Look only at CSC Hits (CSC id is 2)
+        if (detid.subdetId() != MuonSubdetId::CSC) continue;
+          
+        CSCDetId id(detid.rawId());
+          
+        // another sanity check
+        if  (id.station() < 1) continue;
+        if  (id.layer()   < 1) continue;
+          
+
+        // Look up some stuff specific to CSCRecHit2D
+        const CSCRecHit2D* CSChit =dynamic_cast<const CSCRecHit2D*>(&**hit);
+        
+
+        LocalPoint rhitlocal = CSChit->localPosition();
+
+        if (segHitX==rhitlocal.x() &&
+            segHitY==rhitlocal.y()  )
+          isHitMatched=true;
+      
+      }// end loop trackingRecHit_iterator
+
+
+      if (printLevel>0){
+        if (isHitMatched) std::cout<< " -> Matched" <<std::endl;
+        else              std::cout<< " -> NOT Matched" <<std::endl;
+      }
+
+      if (isHitMatched) nMuonMatchedHits++;
+
+    }
+  
+
+    if (printLevel>0) std::cout<< "segment has "  << nMuonMatchedHits
+                               << " hits out of " << nHits 
+                               << " matched"      << std::endl;
+  
+
+    // fill the the vector with the matching segments
+    if (nMuonMatchedHits!=0) {
+      Segment* segment = new Segment(*segIter,nMuonMatchedHits);
+      retVal->push_back(segment);
+    }
+
+  }// end loop on the segments
+  
+  return retVal;
+}
+
+// From Ivan, match the LCTs to segment by looking at strip and WG
+// no phi or eta... 
+bool TrigEff::isMatched ( const CSCSegment &segment, 
+                          edm::Handle<CSCCorrelatedLCTDigiCollection> CSCTFlcts ){
+  
+  bool retVal=false;
+
+  int LCT_key_strip = -999;
+  int LCT_key_wireg = -999;
+
+
+  CSCCorrelatedLCTDigiCollection::Range lctRange = CSCTFlcts.product()->get( segment.cscDetId() );
+  
+  if ( printLevel > 0) {
+    std::cout << " ============================================ " << std::endl;
+    std::cout << " segment CSCDetId " << segment.cscDetId() << std::endl;
+  }
+
+  if (segment.cscDetId().ring() == 4) cout << "IsMatched: FOUND ME11a\n";
+    
+  for(CSCCorrelatedLCTDigiCollection::const_iterator 
+        lct = lctRange.first ; lct != lctRange.second; lct++ ){
+    
+    int closestStrip = 999;
+    int closestWireg = 999;
+    
+    if ( printLevel > 0)
+      std::cout << (*lct) << std::endl;
+  
+    LCT_key_wireg = lct -> getKeyWG();
+    LCT_key_strip = lct -> getStrip();
+    
+    bool foundKeyLayer = false;
+    bool matchedWireg  = false;
+    bool matchedStrip  = false;
+    
+    closestStrip = 999;
+    closestWireg = 999;
+    
+    const std::vector<CSCRecHit2D>& theHits = segment.specificRecHits();
+    
+    std::vector<CSCRecHit2D>::const_iterator hitIter;
+    
+    for (hitIter = theHits.begin(); hitIter!= theHits.end(); hitIter++){
+      
+      bool thisHitStripMatch = false;
+      bool thisHitWiregMatch = false;
+      
+      if ( (hitIter -> cscDetId() . layer() != 3) && 
+           (hitIter -> cscDetId() . layer() != 4) ) continue;
+      
+      foundKeyLayer = true;
+      
+      CSCRecHit2D::ChannelContainer::const_iterator channIter;
+      
+      for (channIter = hitIter -> channels().begin(); channIter != hitIter -> channels().end();
+           channIter++){
+        
+        if ( printLevel >0)
+          std::cout << (*channIter) << ", ";
+        
+        int deltaStrip = LCT_key_strip - 2*(*channIter) + 1;
+        
+        //std::cout << "deltaStrip:" << deltaStrip << std::endl;
+        if ( fabs(deltaStrip) < fabs(closestStrip) )
+          closestStrip = deltaStrip;
+        
+        // if ( abs(deltaStrip) <= 2 ){
+        // suggestion from Vadim...
+        
+        if ( abs(deltaStrip) <= 10 ){
+          matchedStrip = true;
+          thisHitStripMatch = true;
+        }
+       
+      }
+    
+      if ( printLevel > 0)
+        std::cout << std::endl;
+    
+      for (channIter = hitIter -> wgroups().begin(); channIter != hitIter -> wgroups().end();
+           channIter++){
+      
+        if ( printLevel > 0)
+          std::cout << (*channIter) << ", ";
+       
+        int deltaWire = LCT_key_wireg - (*channIter) + 1;
+      
+        //std::cout << "deltaWire" << deltaWire << std::endl;
+      
+        if ( abs(deltaWire) < abs(closestWireg) )
+          closestWireg = deltaWire;
+       
+        if ( abs(deltaWire) <= 2 ){
+          matchedWireg = true;
+          thisHitWiregMatch = true;
+        }
+      
+      }
+     
+      if ( printLevel > 0)
+        std::cout << std::endl;
+   
+      if (thisHitWiregMatch && thisHitStripMatch){
+        retVal = true;
+      } 
+    }
+  }
+
+  return retVal;
+}
+
+
+// GP's test
+//int TrigEff::whichLCTMatches ( const CSCSegment &segment, edm::Handle<CSCCorrelatedLCTDigiCollection> CSCTFlcts ){
+  
+//   int  retValDefault = -999;
+//   bool isMatch = false;
+
+//   int LCT_key_strip = -999;
+//   int LCT_key_wireg = -999;
+
+
+//   //CSCCorrelatedLCTDigiCollection::Range lctRange = CSCTFlcts.product()->get( segment.cscDetId() );
+  
+//   if ( printLevel > 0) {
+//     std::cout << " ============================================ " << std::endl;
+//     std::cout << " segment CSCDetId " << segment.cscDetId() << std::endl;
+//   }
+
+//   int iLCT=-1;
+//   if (printLevel>0) std::cout << "iLCT:" << iLCT << std::endl; 
+
+//   for(CSCCorrelatedLCTDigiCollection::DigiRangeIterator 
+//         corrLct = CSCTFlcts.product()->begin(); 
+//       corrLct != CSCTFlcts.product()->end()  ; corrLct++){
+      
+//     iLCT++;
+    
+//     CSCCorrelatedLCTDigiCollection::Range lctRange = 
+//       CSCTFlcts.product()->get((*corrLct).first);
+
+//     for(CSCCorrelatedLCTDigiCollection::const_iterator 
+//           lct = lctRange.first ; lct != lctRange.second; lct++ ){
+    
+//       if (printLevel>0) std::cout << "iLCT:" << iLCT << std::endl; 
+    
+      
+//       int closestStrip = 999;
+//       int closestWireg = 999;
+      
+//       if ( printLevel > 0)
+//         std::cout << (*lct) << std::endl;
+    
+//       LCT_key_wireg = lct -> getKeyWG();
+//       LCT_key_strip = lct -> getStrip();
+      
+//       bool foundKeyLayer = false;
+//       bool matchedWireg  = false;
+//       bool matchedStrip  = false;
+      
+//       closestStrip = 999;
+//       closestWireg = 999;
+      
+//       const std::vector<CSCRecHit2D>& theHits = segment.specificRecHits();
+      
+//       std::vector<CSCRecHit2D>::const_iterator hitIter;
+      
+//       for (hitIter = theHits.begin(); hitIter!= theHits.end(); hitIter++){
+        
+//         bool thisHitStripMatch = false;
+//         bool thisHitWiregMatch = false;
+        
+//         if ( (hitIter -> cscDetId() . layer() != 3) && 
+//              (hitIter -> cscDetId() . layer() != 4) ) continue;
+        
+//         foundKeyLayer = true;
+        
+//         CSCRecHit2D::ChannelContainer::const_iterator channIter;
+        
+//         for (channIter = hitIter -> channels().begin(); channIter != hitIter -> channels().end();
+//              channIter++){
+          
+//           if ( printLevel >0)
+//             std::cout << (*channIter) << ", ";
+          
+//           int deltaStrip = LCT_key_strip - 2*(*channIter) + 1;
+          
+//           std::cout << "deltaStrip:" << deltaStrip << std::endl;
+//           if ( fabs(deltaStrip) < fabs(closestStrip) )
+//             closestStrip = deltaStrip;
+          
+//           // if ( abs(deltaStrip) <= 2 ){
+//           // suggestion from Vadim...
+          
+//           if ( abs(deltaStrip) <= 10 ){
+//             matchedStrip = true;
+//             thisHitStripMatch = true;
+//           }
+	 
+//         }
+      
+//         if ( printLevel > 0)
+//           std::cout << std::endl;
+      
+//         for (channIter = hitIter -> wgroups().begin(); channIter != hitIter -> wgroups().end();
+//              channIter++){
+        
+//           if ( printLevel > 0)
+//             std::cout << (*channIter) << ", ";
+	 
+//           int deltaWire = LCT_key_wireg - (*channIter) + 1;
+        
+//           std::cout << "deltaWire" << deltaWire << std::endl;
+	
+//           if ( abs(deltaWire) < abs(closestWireg) )
+//             closestWireg = deltaWire;
+	 
+//           if ( abs(deltaWire) <= 2 ){
+//             matchedWireg = true;
+//             thisHitWiregMatch = true;
+//           }
+        
+//         }
+       
+//         if ( printLevel > 0)
+//           std::cout << std::endl;
+     
+//         if (thisHitWiregMatch && thisHitStripMatch){
+//           isMatch = true;
+//         } 
+//       }
+
+//       if (isMatch){
+//         if (printLevel>0) std::cout << " -> MATCHED" << std::endl; 
+//         return iLCT;
+//       }
+//     }
+//   }
+  
+//   return retValDefault;
+  
+//}

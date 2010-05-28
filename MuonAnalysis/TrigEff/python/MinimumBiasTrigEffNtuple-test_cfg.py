@@ -18,7 +18,8 @@ process.load("RecoMuon.TrackingTools.MuonTrackLoader_cff")
 
 # global tag
 process.load('Configuration/StandardSequences/FrontierConditions_GlobalTag_cff')
-process.GlobalTag.globaltag = 'GR10_P_V4::All'
+#process.GlobalTag.globaltag = 'GR10_P_V4::All'
+process.GlobalTag.globaltag = 'GR_R_35X_V8B::All'
 
 # message logger
 process.load('FWCore/MessageService/MessageLogger_cfi')
@@ -53,38 +54,15 @@ process.te = cms.EDAnalyzer("TrigEff",
 process.MuonServiceProxy,
 genTag     = cms.InputTag("genParticles"),
 L1extraTag = cms.InputTag("l1extraParticles"),
-Level1Tag  = cms.InputTag("null"),#using l1extra
-Level2Tag  = cms.InputTag("hltSingleMu9L2Filtered7"),
-Level3Tag  = cms.InputTag("hltSingleMu9L3Filtered9"),
-tracksTag  = cms.InputTag("generalTracks"),
-saMuonsTag = cms.InputTag("standAloneMuons","UpdatedAtVtx"),
 muonsTag   = cms.InputTag("muons"),
-#csctfTag = cms.InputTag("null"),
-#csctfLctsTag = cms.InputTag("null"),
 csctfTag     = cms.InputTag("csctfDigis"),
 csctfLctsTag = cms.InputTag("csctfDigis"),
-TriggerEventTag = cms.InputTag("null"),
-HLTriggerTag = cms.InputTag("null"),
-eta_cut= cms.double(2.4),
-pt_cut= cms.double(0.0),
-matching_cone= cms.double(0.2),
-minvLow  = cms.double(0),
-minvHigh = cms.double(20),
-outputFile = cms.string("MinimumBiasTrigEffNtuple-run132440to133532_1.root"),
-gpTag = cms.InputTag("hltTriggerSummaryAOD","","HLT"),
-## mimic HLTEventAnalyzerRaw
-processName = cms.string("HLT"),
-#triggerName = cms.string("@"), # all paths
-triggerName = cms.string("HLT_Mu0_L1MuOpen"),
-triggerResults = cms.InputTag("TriggerResults","","HLT"),
-triggerEventWithRefs = cms.InputTag("hltTriggerSummaryRAW","","HLT"),
+outputFile = cms.string("MinimumBiasTrigEffNtuple-run132440to134987_1.root"),
+cscSegTag = cms.InputTag("cscSegments"), 
 # mimic L1GTUtils
 AlgorithmName = cms.string('L1_SingleMu7'),
-#
-level2module  = cms.string("hltMu0L1MuOpenL2Filtered0"),
-level3module  = cms.string("hltMu0L1MuOpenL3Filtered0"),
 # printLevel
-printLevel = cms.untracked.int32(-1)
+printLevel = cms.untracked.int32(1)
 )
 # --------- Trig Eff END ----------------
 
@@ -113,14 +91,16 @@ readFiles = cms.untracked.vstring()
 secFiles = cms.untracked.vstring()
 process.source = cms.Source ("PoolSource",
 fileNames = readFiles,
-secondaryFileNames = secFiles
+secondaryFileNames = secFiles#,
+#eventsToProcess =cms.untracked.VEventRange('132601:24017629')
 )
 # -------- PoolSource END -------------
 
 readFiles.extend([
 
-
-    'rfio:/castor/cern.ch/user/d/digiovan/Skims/MinimumBiasApr20/MinBiasSkim_100_1.root' 
+    #'rfio:/castor/cern.ch/user/d/digiovan/Skims/MinimumBiasMay6thPDSkim/MinBiasSkim_167_1.root'
+    #'rfio:/castor/cern.ch/user/d/digiovan/Skims/MinimumBiasMay6thPDSkim_2attempt/MinBiasSkim_110_1.root'
+    'rfio:/castor/cern.ch/user/d/digiovan/Skims/MinimumBiasMay6thPDSkim_2attempt/MinBiasSkim_205_1.root'
  ]
 
 )
