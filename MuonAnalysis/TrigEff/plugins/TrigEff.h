@@ -72,7 +72,7 @@
 
 #include "DataFormats/CSCRecHit/interface/CSCSegmentCollection.h"
 
-
+#include "SegmentLCTMatchBox.h"
 
 //---------------------------------------------------------------------------
 #include "TMath.h"
@@ -444,12 +444,19 @@ private:
     bool isMatched ( const CSCSegment &segment, 
                      edm::Handle<CSCCorrelatedLCTDigiCollection> );
   
-    // 3) inline function for the half strip determination
-    int halfStrip ( int channel, float position ){ 
-      int retVal = 2*channel;
-      if (position < 0) retVal -=1;
-      return retVal;
-    }
+    // 3) inline function for the half strip and wiregroup determination
+    static int wireGroup ( const CSCRecHit2D& hit ); 
+    static int halfStrip ( const CSCRecHit2D& hit );
+    /* int halfStrip ( int channel, float position ){  */
+/*       int retVal = 2*channel; */
+/*       if (position < 0) retVal -=1; */
+/*       return retVal; */
+/*     } */
+
+/*     int wireGroup ( const CSCRecHit2D &hit ){ */
+/*       return ( hit.wgroups()[0] -1 ); */
+/*     } */
+
 
     // class container for the segment and number of hits matching the
     // global muon
@@ -465,7 +472,8 @@ private:
     // return a vector containing the segments associated to the muon
     TrigEff::SegmentVector* SegmentsInMuon(const reco::Muon* muon, const CSCSegmentCollection* segments );
 
-  
+    // importing directly Ivan's object...
+    SegmentLCTMatchBox _matchBox;  
     //---------------------------------------------------------------------
     // l1 extra muon collection
     //---------------------------------------------------------------------

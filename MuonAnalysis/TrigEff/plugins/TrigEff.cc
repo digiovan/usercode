@@ -46,7 +46,9 @@ using namespace reco;
 using namespace std;
 using namespace edm;
 
-TrigEff::TrigEff(const edm::ParameterSet& pset):edm::EDAnalyzer(){
+TrigEff::TrigEff(const edm::ParameterSet& pset):edm::EDAnalyzer(),
+                                                _matchBox(4,4,4,-10,true)
+{
   // not all these tags are useful: need some clean-up
   L1extraTag= pset.getParameter<InputTag>("L1extraTag");
   muonsTag  = pset.getParameter<InputTag>("muonsTag");
@@ -67,6 +69,7 @@ TrigEff::TrigEff(const edm::ParameterSet& pset):edm::EDAnalyzer(){
   printLevel = pset.getUntrackedParameter<int>("printLevel",0);
   
   file  = new TFile(outputFile.c_str(),"RECREATE");
+
 
   // These collections are added after Ivan's email about we need
   // to do trigger efficiency. They contain all the info about 
@@ -2848,46 +2851,118 @@ void TrigEff::fillSegments(edm::Handle<CSCSegmentCollection> cscSegments,
   
 
 // From Ivan
-bool TrigEff::isLCTAble ( const CSCSegment &segment ){
+int TrigEff::halfStrip( const CSCRecHit2D &hit ){
 
-  if (segment . cscDetId().ring() == 4) cout << "IsLCTAble FOUND ME11a\n";
+  int retVal;
 
-  if (segment . cscDetId().ring() == 4 ) return false;
-  if (segment . nRecHits() < 4 )         return false;
+  if (hit.channels().size() == 3)
 
-  int thisStation = segment.cscDetId().station();
+    retVal =  2.0* (hit.channels()[1] + hit.positionWithinStrip() - 0.5 );
   
-  int keyStrip = 999, keyWireg = 999;
+  else
 
-  const std::vector<CSCRecHit2D>& theHits = segment . specificRecHits();
-	    
-  std::vector<CSCRecHit2D>::const_iterator hitIter;
+    retVal =  2.0 * (hit.channels()[0] - hit.positionWithinStrip() - 0.5 );
 
-  for (hitIter = theHits.begin(); hitIter!= theHits.end(); hitIter++){
+  bool evenLayer =  hit.cscDetId().layer() % 2 == 0;
 
-    if (hitIter -> cscDetId(). layer() != 3)
-      continue;
-    
-    keyStrip = halfStrip(hitIter -> channels()[1], hitIter -> positionWithinStrip() );
-    
-    keyWireg =  hitIter -> wgroups()[0];
-    
-  }	    
+  if ( evenLayer )
+    retVal -= 1;
+
+  if ( (hit.cscDetId().station() == 1) && (hit.cscDetId().layer() != 3) && evenLayer )
+    retVal += 1;
+
+  return retVal;
+  
+}
+
+int TrigEff::wireGroup ( const CSCRecHit2D &hit ){
+
+  return ( hit.wgroups()[0] -1 );
+
+}
+
+
+bool TrigEff::isLCTAble ( const CSCSegment &segment ){
 
   int alctEnvelopes[6] = { 2, 1, 0, 1, 2, 2 };
   int clctEnvelopes[6] = { 5, 2, 0, 2, 4, 5 };
 
 
+  if (segment . cscDetId().ring() == 4 ) return false;
+  if (segment . nRecHits() < 4 )         return false;
+  
+  if (printLevel >= 2)
+    std::cout << "*** BEGIN FIDUCIAL *** " << std::endl;
+
+  bool hadKeyInfo = false;
+
+  int thisStation = segment.cscDetId().station();  
+
+  int keyStrip = 999, keyWireg = 999;
+  
+  const std::vector<CSCRecHit2D>& theHits = segment . specificRecHits();
+  
+  std::vector<CSCRecHit2D>::const_iterator hitIter;
+  
+  double sumStrip = 0, sumWireg = 0, nHits = 0;
+
+  for (hitIter = theHits.begin(); hitIter!= theHits.end(); hitIter++){
+    
+    if (hitIter -> cscDetId(). layer() == 3){
+      
+      hadKeyInfo = true;
+      
+      keyStrip = halfStrip (*hitIter);
+      keyWireg = wireGroup (*hitIter);
+      
+    } 
+    
+    sumStrip += halfStrip( *hitIter );
+    sumWireg += wireGroup( *hitIter );
+    nHits+= 1.0;
+    
+    if (printLevel > 0){
+      std::cout << "layer: " << hitIter -> cscDetId(). layer() << " " 
+		<< " number of strips participating: " << hitIter -> channels().size() << std::endl;
+      if ( hitIter -> channels().size()==1 )
+	std::cout << hitIter -> channels()[0] << " " << hitIter -> positionWithinStrip() 
+		  << halfStrip(*hitIter) << std::endl;
+    }
+    
+  }	    
+  
+  if (!hadKeyInfo){ // no hit in key layer... improvize with the averages
+
+    keyStrip = TMath::FloorNint( sumStrip / nHits + 0.5 );
+    keyWireg = TMath::FloorNint( sumWireg / nHits + 0.5 );
+    
+    if (printLevel > 0)
+      std::cout << "sumStrip: " << sumStrip << " sumWireg: " <<  sumWireg << " nHits: " << nHits << std::endl;
+    
+    
+  }
+
   int hitsFidAlct = 0;
   int hitsFidClct = 0;
+
+  if (printLevel > 0)
+    std::cout << "key wg, strip: " << keyWireg <<  ", " << keyStrip << std::endl;
+
 
   for (hitIter = theHits.begin(); hitIter!= theHits.end(); hitIter++){
 
     int thisLayer = hitIter -> cscDetId() . layer();
 
-    int delWgroup = hitIter -> wgroups()[0] - keyWireg;
-    int delStrip  = halfStrip(hitIter -> channels()[1],
-			      hitIter -> positionWithinStrip()) - keyStrip;
+    int delWgroup = wireGroup( *hitIter ) - keyWireg;
+    int delStrip  = halfStrip( *hitIter ) - keyStrip;
+
+    if (printLevel > 0){ // debug why this match didn't work
+
+      std::cout << "layer: " << thisLayer << "wg,st: " << wireGroup( *hitIter ) << ", " << halfStrip ( *hitIter )
+		<< "deltas: " << delWgroup << ", " << delStrip ;
+	
+    }
+
     
     if (thisLayer <=3)
       delWgroup = -delWgroup;
@@ -2899,16 +2974,89 @@ bool TrigEff::isLCTAble ( const CSCSegment &segment ){
       delWgroup = -delWgroup;
 
     if ( delWgroup >=0 )
-      if ( delWgroup <= alctEnvelopes[ thisLayer - 1 ] ) hitsFidAlct++;
+      if ( delWgroup <= (alctEnvelopes[ thisLayer - 1 ]) ) hitsFidAlct++;
 
-    if ( abs(delStrip)  <= clctEnvelopes[ thisLayer - 1 ] ) hitsFidClct++;
+    if ( abs(delStrip)  <= (clctEnvelopes[ thisLayer - 1 ]) ) hitsFidClct++;
+
+    if (printLevel >0)
+      std::cout << " hitsFid alct: " << hitsFidAlct << " clct: " << hitsFidClct << std::endl;
 
   }
 
-  if ( hitsFidAlct < 4) return false;
-  if ( hitsFidClct < 4) return false;
+  if (!hadKeyInfo && (printLevel > 2)) std::cout << "NO KEY INFO!" << std::endl;
+
+  if (printLevel >= 2)
+    std::cout << "*** END FIDUCIAL *** " << std::endl;
+
+  if ( hitsFidAlct < 3) return false;
+  if ( hitsFidClct < 3) return false;
+
+  if (!hadKeyInfo && (printLevel > 2) ) std::cout << "NO KEY INFO AND FIDUCIAL! " << segment.cscDetId() << std::endl;
+
   
   return true;
+
+
+  // first version
+//   if (segment . cscDetId().ring() == 4) cout << "IsLCTAble FOUND ME11a\n";
+
+//   if (segment . cscDetId().ring() == 4 ) return false;
+//   if (segment . nRecHits() < 4 )         return false;
+
+//   int thisStation = segment.cscDetId().station();
+  
+//   int keyStrip = 999, keyWireg = 999;
+
+//   const std::vector<CSCRecHit2D>& theHits = segment . specificRecHits();
+	    
+//   std::vector<CSCRecHit2D>::const_iterator hitIter;
+
+//   for (hitIter = theHits.begin(); hitIter!= theHits.end(); hitIter++){
+
+//     if (hitIter -> cscDetId(). layer() != 3)
+//       continue;
+    
+//     keyStrip = halfStrip(hitIter -> channels()[1], hitIter -> positionWithinStrip() );
+    
+//     keyWireg =  hitIter -> wgroups()[0];
+    
+//   }	    
+
+//   int alctEnvelopes[6] = { 2, 1, 0, 1, 2, 2 };
+//   int clctEnvelopes[6] = { 5, 2, 0, 2, 4, 5 };
+
+
+//   int hitsFidAlct = 0;
+//   int hitsFidClct = 0;
+
+//   for (hitIter = theHits.begin(); hitIter!= theHits.end(); hitIter++){
+
+//     int thisLayer = hitIter -> cscDetId() . layer();
+
+//     int delWgroup = hitIter -> wgroups()[0] - keyWireg;
+//     int delStrip  = halfStrip(hitIter -> channels()[1],
+// 			      hitIter -> positionWithinStrip()) - keyStrip;
+    
+//     if (thisLayer <=3)
+//       delWgroup = -delWgroup;
+
+//     if (thisStation == 3)
+//       delWgroup = -delWgroup;
+
+//     if (thisStation == 4)
+//       delWgroup = -delWgroup;
+
+//     if ( delWgroup >=0 )
+//       if ( delWgroup <= alctEnvelopes[ thisLayer - 1 ] ) hitsFidAlct++;
+
+//     if ( abs(delStrip)  <= clctEnvelopes[ thisLayer - 1 ] ) hitsFidClct++;
+
+//   }
+
+//   if ( hitsFidAlct < 4) return false;
+//   if ( hitsFidClct < 4) return false;
+  
+//   return true;
 
 }
 
@@ -2954,7 +3102,7 @@ void  TrigEff::fillSegmentsMuons ( const edm::Handle<reco::MuonCollection> muons
        muon!=muons->end(); muon++) {
     
     whichMuon++;
-    if (printLevel) cout << "whichMuon="<<whichMuon<<endl;
+    if (printLevel>0) cout << "whichMuon="<<whichMuon<<endl;
     // given a muon candidate, loop over the segments and find the segments belonging
     // to the muon and see if they are "LCTAble"
 
@@ -3019,12 +3167,14 @@ void  TrigEff::fillSegmentsMuons ( const edm::Handle<reco::MuonCollection> muons
       muon_cscsegs_gbl_dir_eta[whichMuon][iSegment] = globalDirection.eta();
       muon_cscsegs_gbl_dir_phi[whichMuon][iSegment] = globalDirection.phi();
 
-      cout << "GP debugging...\n";
-      cout << "kEndcap =" << id.endcap()  << endl;
-      cout << "kRing   =" << id.ring()    << endl;
-      cout << "kStation=" << id.station() << endl;
-      cout << "kChamber=" << id.chamber() << endl;
-    
+      if (printLevel >0) {
+        cout << "GP debugging...\n";
+        cout << "kEndcap =" << id.endcap()  << endl;
+        cout << "kRing   =" << id.ring()    << endl;
+        cout << "kStation=" << id.station() << endl;
+        cout << "kChamber=" << id.chamber() << endl;
+      }
+
       muon_cscsegs_endcap [whichMuon][iSegment] = id.endcap(); 
       muon_cscsegs_station[whichMuon][iSegment] = id.station();
       muon_cscsegs_ring   [whichMuon][iSegment] = id.ring();   
@@ -3036,15 +3186,19 @@ void  TrigEff::fillSegmentsMuons ( const edm::Handle<reco::MuonCollection> muons
       muon_cscsegs_dxdzErr[whichMuon][iSegment] = -999; //(*segmentCSC)->cscsegcand.dXdZErr;
       muon_cscsegs_dydzErr[whichMuon][iSegment] = -999; //(*segmentCSC)->cscsegcand.dYdZErr;
 
-      bool isTriggerAble = isLCTAble( (*segmentCSC)->cscsegcand );
-      bool isLCTMatched  = isMatched( (*segmentCSC)->cscsegcand, CSCTFlcts );
-          
+      //bool isTriggerAbleGP = isLCTAble( (*segmentCSC)->cscsegcand );
+      //bool isLCTMatchedGP  = isMatched( (*segmentCSC)->cscsegcand, CSCTFlcts );
+      bool isTriggerAble = _matchBox.isLCTAble( (*segmentCSC)->cscsegcand, 0);
+      bool isLCTMatched  = _matchBox.isMatched( (*segmentCSC)->cscsegcand, CSCTFlcts , 0 );
+  
       if (printLevel>0) {
         std::cout << std::endl;
         std::cout <<"segmentCSC->nMatchedHits=" 
                   << (*segmentCSC)->nMatchedHits << std::endl; 
-        std::cout <<"isLCTAble?=" << isTriggerAble << std::endl; 
-        std::cout <<"isMatched?=" << isLCTMatched  << std::endl; 
+        //std::cout <<"isLCTAble?=" << isTriggerAbleGP << std::endl; 
+        //std::cout <<"isMatched?=" << isLCTMatchedGP  << std::endl; 
+        std::cout <<"isLCTAble Ivan?=" << _matchBox.isLCTAble( (*segmentCSC)->cscsegcand, 0) << std::endl; 
+        std::cout <<"isMatched Ivan?=" << _matchBox.isMatched( (*segmentCSC)->cscsegcand, CSCTFlcts , 0 ) << std::endl; 
       }
 
       muon_cscsegs_islctable[whichMuon][iSegment] = isTriggerAble;
@@ -3057,23 +3211,40 @@ void  TrigEff::fillSegmentsMuons ( const edm::Handle<reco::MuonCollection> muons
 
       int whichLCT=-999;// find the corresponding LCT in the list
       if (isLCTMatched) {
-        
         int iLCT=-1;
+
+        CSCDetId *segDetId= 0;
+        const CSCDetId &origId = (*segmentCSC)->cscsegcand.cscDetId();
+
+        // if we're in ME11a, we have to worry about triple-ganging of strips.
+        if (origId.ring() == 4){
+          segDetId = new CSCDetId ( origId.endcap(), origId.station(), 1,origId.chamber());
+        } else {
+          segDetId = new CSCDetId ( origId );
+        }
+
         for(CSCCorrelatedLCTDigiCollection::DigiRangeIterator 
               corrLct = CSCTFlcts.product()->begin(); 
             corrLct != CSCTFlcts.product()->end()  ; corrLct++){
           
           iLCT++;
-      
+        
           CSCCorrelatedLCTDigiCollection::Range lctRange1 = 
-            CSCTFlcts.product()->get( (*segmentCSC)->cscsegcand.cscDetId() );
+            CSCTFlcts.product()->get( *segDetId );
+            //CSCTFlcts.product()->get( (*segmentCSC)->cscsegcand.cscDetId() );
           
           CSCCorrelatedLCTDigiCollection::Range lctRange2 = 
             CSCTFlcts.product()->get((*corrLct).first);
-        	
+ 
+          // to show to Ivan: he was right, as always
+          // segments have cscDetId == 4 for ME1/1a
+          // while LCTs do not have it!!!
+          //std::cout << "  lctRange1: " <<   (*segmentCSC)->cscsegcand.cscDetId() << endl;   	
+          //std::cout << "  lctRange2: " <<   (*corrLct).first << endl; 
+  	
           // find the matching one
           if (lctRange1 == lctRange2) {
-            
+          
             whichLCT=iLCT;
             
             if (printLevel > 0 )
@@ -3086,7 +3257,11 @@ void  TrigEff::fillSegmentsMuons ( const edm::Handle<reco::MuonCollection> muons
 
       muon_cscsegs_lctId    [whichMuon][iSegment] = whichLCT;
       muon_cscsegs_nmatched [whichMuon][iSegment] = (*segmentCSC)->nMatchedHits;
-
+     
+      if (printLevel >0 ){
+        std::cout << "muon_cscsegs_lctId    [" << whichMuon << "][" << iSegment << "] = " << whichLCT << std::endl;
+        std::cout << "muon_cscsegs_nmatched [" << whichMuon << "][" << iSegment << "] = " << (*segmentCSC)->nMatchedHits << std::endl;
+      }
     }
 
     delete segVect;
@@ -3217,7 +3392,110 @@ TrigEff::SegmentVector* TrigEff::SegmentsInMuon(const reco::Muon* muon,
 bool TrigEff::isMatched ( const CSCSegment &segment, 
                           edm::Handle<CSCCorrelatedLCTDigiCollection> CSCTFlcts ){
   
+  if (printLevel > 2)
+    std::cout << "*** BEGIN MATCHING *** " << std::endl;
+  
+  
   bool retVal=false;
+
+  int LCT_key_strip = -999;
+  int LCT_key_wireg = -999;
+
+  const int noMatchVal = 9999;
+
+  int keyStripEstim = noMatchVal;
+  int keyWiregEstim = noMatchVal;
+
+  double stripSum = 0, wiregSum = 0, numHits = 0;
+
+
+  // first, find the estimator for the key strip and wire group from recHits
+
+  const std::vector<CSCRecHit2D>& theHits = segment.specificRecHits();
+  std::vector<CSCRecHit2D>::const_iterator hitIter;
+
+  bool hadKeyInfo = false;
+  
+  for (hitIter = theHits.begin(); hitIter!= theHits.end(); hitIter++){
+
+    if ( hitIter -> cscDetId() . layer() == 3){
+
+      hadKeyInfo = true;
+
+      keyStripEstim = halfStrip ( *hitIter );
+      keyWiregEstim = wireGroup ( *hitIter );
+
+    }
+    
+    stripSum += halfStrip ( *hitIter );
+    wiregSum += wireGroup ( *hitIter );
+    numHits  += 1.0;
+  }
+
+  if (!hadKeyInfo){ // no key info .. have to improvise with averages..
+    
+    if (printLevel > 0)
+      std::cout << "MATCHING: NO KEY INFO!!!" << std::endl;
+
+    keyStripEstim = stripSum / numHits;
+    keyWiregEstim = wiregSum / numHits;
+
+  }
+
+  int numLCTsChamber = 0;
+
+  CSCCorrelatedLCTDigiCollection::Range lctRange = CSCTFlcts -> get( segment.cscDetId() );
+
+  if ( printLevel > 0) {
+    std::cout << " ============================================ " << std::endl;
+    std::cout << " segment CSCDetId " << segment.cscDetId() << std::endl;
+    
+    if (segment.cscDetId().ring() == 4) cout << "IsMatched: FOUND ME11a\n";
+  }
+
+  int deltaWireg = 999, deltaStrip = 999;
+  
+  if ( printLevel > 0) 
+    std::cout << " segment CSCDetId " << segment.cscDetId() << std::endl;
+  
+  bool lctWiregMatch = false;
+  bool lctStripMatch = false;
+
+  for(CSCCorrelatedLCTDigiCollection::const_iterator lct = lctRange.first ; 
+      lct != lctRange.second; lct++ ){
+
+    if ( printLevel > 0)
+      std::cout << (*lct) << std::endl;
+
+    numLCTsChamber++;
+    
+    LCT_key_wireg = lct -> getKeyWG();
+    LCT_key_strip = lct -> getStrip();
+    
+    deltaWireg = keyWiregEstim - LCT_key_wireg;
+    deltaStrip = keyStripEstim - LCT_key_strip;
+
+
+    lctWiregMatch |= ( abs(deltaWireg) <=  5 );
+    lctStripMatch |= ( abs(deltaStrip) <= 10 );
+
+    
+  }
+  
+  retVal =  lctWiregMatch && lctStripMatch ;
+  
+  if (!retVal && (printLevel > 0) )
+    std::cout << "FAIL: retVal was " << retVal 
+	      << " - numLCTS was: " << numLCTsChamber 
+	      << segment.cscDetId() << std::endl;
+
+  if (printLevel > 3)
+    std::cout << "*** END MATCHING *** " << std::endl;
+
+  return retVal;
+  
+
+  /*  bool retVal=false;
 
   int LCT_key_strip = -999;
   int LCT_key_wireg = -999;
@@ -3322,6 +3600,7 @@ bool TrigEff::isMatched ( const CSCSegment &segment,
   }
 
   return retVal;
+  */
 }
 
 
