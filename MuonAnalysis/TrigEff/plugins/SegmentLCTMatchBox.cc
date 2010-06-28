@@ -438,5 +438,351 @@ bool SegmentLCTMatchBox::isLCTAble ( const CSCSegment &segment, int *match_repor
 
 }
 
+// it will return true if the segment is matched by an LCT and this LCT belongs
+// to one of the CSCTF triggering tracks
+bool SegmentLCTMatchBox::belongsToTrigger ( const CSCSegment &segment, 
+                                            edm::Handle<L1CSCTrackCollection> CSCTFtracks,
+                                            edm::Handle<CSCCorrelatedLCTDigiCollection> CSCTFlcts){
 
+
+  if (_printLevel > 2)
+    std::cout << "*** CHECKING IF THE SEGMENT BELONGS TO A TRIGGER *** " 
+              << std::endl;
+  
+  bool retVal=false;
+
+  int LCT_key_strip = -999;
+  int LCT_key_wireg = -999;
+
+  const int noMatchVal = 9999;
+
+  int keyStripEstim = noMatchVal;
+  int keyWiregEstim = noMatchVal;
+
+  CSCDetId *tempDetId= 0;
+  const CSCDetId &origId = segment.cscDetId();
+
+
+  // if we're in ME11a, we have to worry about triple-ganging of strips.
+
+  bool me11aStation = false;
+
+  if (segment.cscDetId().ring() == 4){
+    
+    me11aStation = true;
+    
+    tempDetId = new CSCDetId ( origId.endcap(), origId.station(), 1,origId.chamber());
+
+  } else {
+
+    tempDetId = new CSCDetId ( origId );
+
+  }
+
+  double stripSum = 0, wiregSum = 0, numHits = 0;
+
+
+  // first, find the estimator for the key strip and wire group from recHits
+
+  const std::vector<CSCRecHit2D>& theHits = segment.specificRecHits();
+  std::vector<CSCRecHit2D>::const_iterator hitIter;
+
+  bool hadKeyInfo = false;
+  
+  for (hitIter = theHits.begin(); hitIter!= theHits.end(); hitIter++){
+
+    if ( hitIter -> cscDetId() . layer() == 3){
+
+      hadKeyInfo = true;
+
+      keyStripEstim = halfStrip ( *hitIter );
+      keyWiregEstim = wireGroup ( *hitIter );
+
+    }
+    
+    stripSum += halfStrip ( *hitIter );
+    wiregSum += wireGroup ( *hitIter );
+    numHits  += 1.0;
+  }
+
+  if (!hadKeyInfo){ // no key info .. have to improvise with averages..
+    
+    if (_printLevel > 1)
+      std::cout << "MATCHING: NO KEY INFO!!!" << std::endl;
+
+    keyStripEstim = stripSum / numHits;
+    keyWiregEstim = wiregSum / numHits;
+
+  }
+
+  if (me11aStation){
+    keyStripEstim = me11aNormalize (keyStripEstim);
+  }
+
+  int numLCTsChamber = 0;
+
+  CSCCorrelatedLCTDigiCollection::Range lctRange = CSCTFlcts -> get( *tempDetId );
+
+  int deltaWireg = 999, deltaStrip = 999;
+  
+  if ( _printLevel >= 0) 
+    std::cout << " segment CSCDetId " << segment.cscDetId() << std::endl;
+  
+
+  bool lctWiregMatch = false;
+  bool lctStripMatch = false;
+
+  for(CSCCorrelatedLCTDigiCollection::const_iterator lct = lctRange.first ; lct != lctRange.second; lct++ ){
+
+    if ( _printLevel >= 0)
+      std::cout << (*lct) << std::endl;
+
+    LCT_key_wireg = lct -> getKeyWG();
+    LCT_key_strip = lct -> getStrip();
+
+    numLCTsChamber++;
+   
+    if (me11aStation)
+      LCT_key_strip = me11aNormalize( LCT_key_strip );
+
+    deltaWireg = keyWiregEstim - LCT_key_wireg;
+    deltaStrip = keyStripEstim - LCT_key_strip;
+
+    if (me11aStation){ // the ganging of ME11a causes wraparound effects at the boundaries for delta strip 
+
+      if (deltaStrip > 16) deltaStrip -= 32;
+      if (deltaStrip < -16) deltaStrip += 32;
+
+    }
+
+    lctWiregMatch |= ( abs(deltaWireg) <=  5 );
+    lctStripMatch |= ( abs(deltaStrip) <= 10 );
+
+    bool isMatched = lctWiregMatch && lctStripMatch ;
+
+    if (isMatched) {
+
+      // loop over the track to see if the matched segment belong to a triggering TF track 
+      for(L1CSCTrackCollection::const_iterator trk=CSCTFtracks->begin(); trk<CSCTFtracks->end(); trk++){
+        
+        // For each trk, get the list of its LCTs
+        CSCCorrelatedLCTDigiCollection lctsOfTrack = trk -> second;
+  
+        // loop over all the lcts of the track
+        for(CSCCorrelatedLCTDigiCollection::DigiRangeIterator lctOfTrk = lctsOfTrack.begin(); lctOfTrk  != lctsOfTrack.end()  ; lctOfTrk++){
+	  
+          //CSCCorrelatedLCTDigiCollection::Range lctOfTrkRange = 
+          //lctsOfTracks.get((*lctOfTrk).first);
+	  CSCCorrelatedLCTDigiCollection::Range lctOfTrkRange = (*lctOfTrk).second;
+
+          if (lctRange == lctOfTrkRange) retVal = true;
+          
+      
+        }// loop over lcts of a track
+      
+      }// loop over the CSCTF tracks
+    
+    } // is Matched?
+  }
+  
+  if (!retVal && (_printLevel > 1) )
+    std::cout << "FAIL: retVal was " << retVal 
+              << segment.cscDetId() << std::endl;
+
+  if (_printLevel > 3)
+    std::cout << "*** END MATCHING TO THE CSCTF TRIGGER*** " << std::endl;
+
+  delete tempDetId;
+
+  return retVal;
+  
+}
+
+
+// -999: no matching
+//  1: bad phi road. Not good extrapolation, but still triggering
+// 11: singles
+// 15: halo
+// 2->10 and 12->14: coincidence trigger with good extrapolation
+
+// it is equivalent to belongsToTrigger but instead of a boolean it returns
+// the track mode. -999 mean no trigger found. 
+int SegmentLCTMatchBox::whichMode ( const CSCSegment &segment, 
+                                    edm::Handle<L1CSCTrackCollection> CSCTFtracks,
+                                    edm::Handle<CSCCorrelatedLCTDigiCollection> CSCTFlcts){
+
+
+  if (_printLevel > 2)
+    std::cout << "*** CHECKING IF THE SEGMENT BELONGS TO A TRIGGER *** " 
+              << std::endl;
+  
+  int retVal=-999;
+
+  int LCT_key_strip = -999;
+  int LCT_key_wireg = -999;
+
+  const int noMatchVal = 9999;
+
+  int keyStripEstim = noMatchVal;
+  int keyWiregEstim = noMatchVal;
+
+  CSCDetId *tempDetId= 0;
+  const CSCDetId &origId = segment.cscDetId();
+
+
+  // if we're in ME11a, we have to worry about triple-ganging of strips.
+
+  bool me11aStation = false;
+
+  if (segment.cscDetId().ring() == 4){
+    
+    me11aStation = true;
+    
+    tempDetId = new CSCDetId ( origId.endcap(), origId.station(), 1,origId.chamber());
+
+  } else {
+
+    tempDetId = new CSCDetId ( origId );
+
+  }
+
+  double stripSum = 0, wiregSum = 0, numHits = 0;
+
+
+  // first, find the estimator for the key strip and wire group from recHits
+
+  const std::vector<CSCRecHit2D>& theHits = segment.specificRecHits();
+  std::vector<CSCRecHit2D>::const_iterator hitIter;
+
+  bool hadKeyInfo = false;
+  
+  for (hitIter = theHits.begin(); hitIter!= theHits.end(); hitIter++){
+
+    if ( hitIter -> cscDetId() . layer() == 3){
+
+      hadKeyInfo = true;
+
+      keyStripEstim = halfStrip ( *hitIter );
+      keyWiregEstim = wireGroup ( *hitIter );
+
+    }
+    
+    stripSum += halfStrip ( *hitIter );
+    wiregSum += wireGroup ( *hitIter );
+    numHits  += 1.0;
+  }
+
+  if (!hadKeyInfo){ // no key info .. have to improvise with averages..
+    
+    if (_printLevel > 1)
+      std::cout << "MATCHING: NO KEY INFO!!!" << std::endl;
+
+    keyStripEstim = stripSum / numHits;
+    keyWiregEstim = wiregSum / numHits;
+
+  }
+
+  if (me11aStation){
+    keyStripEstim = me11aNormalize (keyStripEstim);
+  }
+
+  int numLCTsChamber = 0;
+
+  CSCCorrelatedLCTDigiCollection::Range lctRange = CSCTFlcts -> get( *tempDetId );
+
+  int deltaWireg = 999, deltaStrip = 999;
+  
+  if ( _printLevel >= 0) 
+    std::cout << " segment CSCDetId " << segment.cscDetId() << std::endl;
+  
+
+  bool lctWiregMatch = false;
+  bool lctStripMatch = false;
+
+  for(CSCCorrelatedLCTDigiCollection::const_iterator lct = lctRange.first ; lct != lctRange.second; lct++ ){
+
+    //if ( _printLevel >= 0)
+      std::cout << (*lct) << std::endl;
+
+    LCT_key_wireg = lct -> getKeyWG();
+    LCT_key_strip = lct -> getStrip();
+
+    numLCTsChamber++;
+   
+    if (me11aStation)
+      LCT_key_strip = me11aNormalize( LCT_key_strip );
+
+    deltaWireg = keyWiregEstim - LCT_key_wireg;
+    deltaStrip = keyStripEstim - LCT_key_strip;
+
+    if (me11aStation){ // the ganging of ME11a causes wraparound effects at the boundaries for delta strip 
+
+      if (deltaStrip > 16) deltaStrip -= 32;
+      if (deltaStrip < -16) deltaStrip += 32;
+
+    }
+
+    lctWiregMatch |= ( abs(deltaWireg) <=  5 );
+    lctStripMatch |= ( abs(deltaStrip) <= 10 );
+    
+    bool isMatched = lctWiregMatch && lctStripMatch ;
+    
+    if (isMatched) {
+      
+      // debugging
+      //std::cout << "I AM MATCHED\n";
+      //std::cout << "detId: "   << *tempDetId        << std::endl;
+      //std::cout << "strip: "   << lct -> getStrip() << std::endl;
+      //std::cout << "wg: "      << lct -> getKeyWG() << std::endl;
+      
+      // loop over the track to see if the matched segment belong to a triggering TF track 
+      for(L1CSCTrackCollection::const_iterator trk=CSCTFtracks->begin(); trk<CSCTFtracks->end(); trk++){
+        
+        // For each trk, get the list of its LCTs
+        CSCCorrelatedLCTDigiCollection lctsOfTrack = trk -> second;
+        
+        // loop over all the lcts of the track
+        for(CSCCorrelatedLCTDigiCollection::DigiRangeIterator lctOfTrk = lctsOfTrack.begin(); lctOfTrk  != lctsOfTrack.end()  ; lctOfTrk++){
+          
+          CSCCorrelatedLCTDigiCollection::Range lctOfTrkRange = lctsOfTrack.get((*lctOfTrk).first);
+          
+          for(CSCCorrelatedLCTDigiCollection::const_iterator lctTRK=lctOfTrkRange.first; lctTRK!=lctOfTrkRange.second; lctTRK++){
+            
+            // debugging
+            //std::cout << "test detId: "   << (*lctOfTrk).first    << std::endl;
+            //std::cout << "test strip: "   << lctTRK -> getStrip() << std::endl;
+            //std::cout << "test wg: "      << lctTRK -> getKeyWG() << std::endl;
+ 
+            //std::cout << "  test DetId: " << (*lctOfTrk).first  << std::endl;   	
+            //std::cout << "  lctRange2: " <<  *tempDetId << std::endl; 
+  	
+            // matching DetId, strip and WG
+            if ( (*tempDetId        == (*lctOfTrk).first   ) &&
+                 (lct -> getStrip() == lctTRK -> getStrip()) &&
+                 (lct -> getKeyWG() == lctTRK -> getKeyWG()) ){
+              
+              //std::cout << "MATCHED\n";
+              // PtAddress gives an handle on other parameters such as the trk mode
+              ptadd thePtAddress(trk->first.ptLUTAddress());
+         
+              retVal = thePtAddress.track_mode;  
+            }
+          }
+          
+        }// loop over lcts of a track
+        
+      }// loop over the CSCTF tracks
+      
+    }// is Matched?
+  }
+  
+  
+  if (_printLevel > 3)
+    std::cout << "*** END MATCHING TO THE CSCTF TRIGGER*** " << std::endl;
+  
+  delete tempDetId;
+  
+  return retVal;
+  
+}
 

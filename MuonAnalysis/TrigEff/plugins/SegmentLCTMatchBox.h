@@ -2,7 +2,9 @@
 #define __SEGMENTLCTMATCHBOX_H (1)
 
 #include "DataFormats/CSCRecHit/interface/CSCSegmentCollection.h"
+#include "L1Trigger/CSCTrackFinder/interface/CSCTrackFinderDataTypes.h"
 #include "DataFormats/CSCDigi/interface/CSCCorrelatedLCTDigiCollection.h"
+#include "DataFormats/L1CSCTrackFinder/interface/L1CSCTrackCollection.h"
 #include "FWCore/Framework/interface/Event.h"
 
 class TH1F;
@@ -24,6 +26,16 @@ class SegmentLCTMatchBox {
   bool isLCTAble ( const CSCSegment &segment, int *match_analysis = 0 );
 
   bool isMatched ( const CSCSegment &segment, edm::Handle<CSCCorrelatedLCTDigiCollection>, int *match_analysis = 0 );
+
+  bool belongsToTrigger ( const CSCSegment &segment, 
+                          edm::Handle<L1CSCTrackCollection> tracks,
+                          edm::Handle<CSCCorrelatedLCTDigiCollection> CSCTFlcts);
+
+  int  whichMode ( const CSCSegment &segment, 
+                   edm::Handle<L1CSCTrackCollection> tracks,
+                   edm::Handle<CSCCorrelatedLCTDigiCollection> CSCTFlcts);
+
+  int whichMode ( const CSCSegment &segment, edm::Handle<CSCCorrelatedLCTDigiCollection>, int *match_analysis = 0 );
   
   // debug / monitoring
 
