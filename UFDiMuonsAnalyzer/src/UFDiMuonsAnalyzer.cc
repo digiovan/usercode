@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Gian Piero Di Giovanni,32 4-B08,+41227674961,
 //         Created:  Thur Oct 21 10:44:13 CEST 2010
-// $Id: UFDiMuonsAnalyzer.cc,v 1.41 2012/01/27 09:55:02 digiovan Exp $
+// $Id: UFDiMuonsAnalyzer.cc,v 1.1 2012/04/16 15:12:32 digiovan Exp $
 //
 //
 
@@ -134,7 +134,7 @@ bool sortJetFunc   (pat::Jet     i, pat::Jet     j){ return (i.pt()>j.pt()); }
 bool sortGenJetFunc(reco::GenJet i, reco::GenJet j){ return (i.pt()>j.pt()); }
 
 // Add the data formats
-#include "UserCode/UFDiMuonsAnalyzer/interface/DataFormats.h"
+#include "ZPtToMuMu/UFDiMuonsAnalyzer/interface/DataFormats.h"
 
 // general 
 double const PDG_MASS_Z  = 91.1876;//GeV/c2
