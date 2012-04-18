@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Gian Piero Di Giovanni,32 4-B08,+41227674961,
 //         Created:  Thur Oct 21 10:44:13 CEST 2010
-// $Id: UFDiMuonsAnalyzer.cc,v 1.1 2012/04/16 15:12:32 digiovan Exp $
+// $Id: UFDiMuonsAnalyzer.cc,v 1.2 2012/04/16 15:49:26 digiovan Exp $
 //
 //
 
@@ -304,8 +304,6 @@ private:
 
   double _ptMin;
   double _etaMax;
-  double _etaMaxLoose;
-  double _etaMaxTight;
   double _normChiSquareMax;
   double _d0Max;
 
@@ -2004,8 +2002,6 @@ void UFDiMuonsAnalyzer::displaySelection() {
   // variable to cuts over
   std::cout << " - _ptMin:            " << _ptMin << std::endl;
   std::cout << " - _etaMax:           " << _etaMax<< std::endl;
-  std::cout << " - _etaMaxLoose:      " << _etaMaxLoose << std::endl;
-  std::cout << " - _etaMaxTight:      " << _etaMaxTight << std::endl;
   std::cout << " - _normChiSquareMax: " << _normChiSquareMax << std::endl;
   std::cout << " - _d0Max:            " << _d0Max << std::endl;            
 
