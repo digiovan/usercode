@@ -1,0 +1,14 @@
+create a list called thefiles.list:
+
+   * ls /data/uftrig01b/digiovan/root/CMSSW_5_2_3_patch1/SkimsSingleMuRun2012A-PromptReco-v1_AOD/ | grep root | sort | awk '{print "/data/uftrig01b/digiovan/root/CMSSW_5_2_3_patch1/SkimsSingleMuRun2012A-PromptReco-v1_AOD/"$1}' > thefiles.list
+
+generate the list of files:
+
+   * python genfiles.py
+
+cmsRun add.py Run2012A-PromptReco-v1_XXXXX
+
+# clean-up
+mv logfile_* *PromptReco*.py /data/uftrig01b/digiovan/root/CMSSW_5_2_3_patch1/SkimsSingleMuRun2012A-PromptReco-v1_AOD/mergedFiles/
+rm *pyc
+
