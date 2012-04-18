@@ -28,25 +28,26 @@ if thisIsData:
     print 'Loading Global Tag For Data'
     process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
     process.GlobalTag.globaltag = "GR_R_42_V19::All"
+ #   process.GlobalTag.globaltag = "GR_P_V32::All"
 else:
     print 'Loading Global Tag For MC'
     process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
     process.GlobalTag.globaltag = "START52_V5::All"
-
+    
 
 # ------------ PoolSource -------------
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(500) )
 process.source = cms.Source("PoolSource",
-                            fileNames = cms.untracked.vstring('file:DYJetsToLL_2_1_RQm.root')
+                            fileNames = cms.untracked.vstring('/store/mc/Summer12/DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball/AODSIM/PU_S7_START52_V5-v2/0000/008CA5C0-CD7A-E111-987D-001A64789D14.root')
                             )
 #process.options   = cms.untracked.PSet( wantSummary = cms.untracked.bool(True) )
 # -------- PoolSource END -------------
 
 
 #===============================================================================
-process.load("UserCode.UFDiMuonsAnalyzer.UFDiMuonAnalyzer_nocuts_cff")
+process.load("ZPtToMuMu.UFDiMuonsAnalyzer.UFDiMuonAnalyzer_nocuts_cff")
 process.dimuons = process.DiMuons.clone()
-process.dimuons.getFilename = cms.untracked.string("DYJetsToLL.root")
+process.dimuons.getFilename = cms.untracked.string("DoubleMuRun2012A.root")
 process.dimuons.isMonteCarlo = cms.bool(True) 
 
 ## process.dimuons.nMuons = cms.int32(0)
@@ -68,7 +69,7 @@ process.dimuons.isMonteCarlo = cms.bool(True)
 ## 
 ## process.dimuons.checkTrigger   = cms.bool(False)
 process.dimuons.processName    = cms.string("HLT")
-process.dimuons.triggerNames   = cms.vstring("HLT_Mu30_eta2p1","HLT_Mu40_eta2p1")
+process.dimuons.triggerNames   = cms.vstring("HLT_Mu15_eta2p1")
 process.dimuons.triggerResults = cms.InputTag("TriggerResults","","HLT")
 process.dimuons.triggerEvent   = cms.InputTag("hltTriggerSummaryAOD","","HLT")
 ## 
