@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Gian Piero Di Giovanni,32 4-B08,+41227674961,
 //         Created:  Thur Oct 21 10:44:13 CEST 2010
-// $Id: UFMuonElectronAnalyzer.cc,v 1.10 2012/01/27 09:55:02 digiovan Exp $
+// $Id: UFMuonElectronAnalyzer.cc,v 1.1.2.1 2012/05/27 19:57:01 digiovan Exp $
 //
 //
 
@@ -183,6 +183,9 @@ private:
   virtual void beginJob() ;
   virtual void analyze(const edm::Event&, const edm::EventSetup&);
   virtual void endJob() ;
+
+  void initMuon(_MuonInfo& muon);
+  void initEle ( _EleInfo& ele );
 
   virtual void beginRun(edm::Run const &, edm::EventSetup const&);
 
@@ -538,7 +541,12 @@ void UFMuonElectronAnalyzer::analyze(const edm::Event& iEvent,
     reco::Muon mu  = pair->first;
     heep::Ele  ele = pair->second;
 
+    initMuon(_muon);
+    initEle (_ele );
+    _recoCandMass = -999;
+    _recoCandPt   = -999;
     
+ 
     // store all the info
     // muon
     _muon.isGlobal     = mu.isGlobalMuon(); 
@@ -1081,6 +1089,74 @@ void UFMuonElectronAnalyzer::displaySelection() {
     std::cout << "    * triggerNames["<<i<<"]: " << triggerBaseNames_[i] << std::endl;
   
   std::cout << std::endl << std::endl;
+
+}
+
+void UFMuonElectronAnalyzer::initMuon(_MuonInfo& muon) {
+
+  muon.isTracker    = -999;
+  muon.isStandAlone = -999;
+  muon.isGlobal     = -999;
+
+  muon.charge = -999;
+  muon.pt     = -999;
+  muon.eta    = -999; 
+  muon.phi    = -999;
+  
+  muon.normChiSquare=-999;
+  muon.d0= -999;
+  muon.dz= -999;
+  
+  muon.numPixelLayers = -999; 
+  muon.numTrackerLayers = -999;
+  muon.numStripLayers = -999;  
+  
+  muon.validFracTracker = -999;
+
+  muon.numValidMuonHits    = -999;
+  muon.numValidPixelHits   = -999;
+  muon.numValidTrackerHits = -999;
+  muon.numValidStripHits   = -999;
+  muon.numSegmentMatches   = -999;
+  muon.numOfMatchedStations= -999;
+  
+  muon.trackIsoSumPt = -999;
+  muon.hcalIso       = -999;
+  muon.ecalIso       = -999;
+  muon.relCombIso    = -999;
+
+  muon.isPFMuon = -999;
+
+  muon.pfPt  = -999;
+  muon.pfEta = -999;
+  muon.pfPhi = -999;
+
+  muon.sumChargedHadronPtR03   = -999;
+  muon.sumChargedParticlePtR03 = -999;
+  muon.sumNeutralHadronEtR03   = -999;
+  muon.sumPhotonEtR03          = -999;
+  muon.sumPUPtR03              = -999;
+  
+  muon.sumChargedHadronPtR04   = -999;
+  muon.sumChargedParticlePtR04 = -999;
+  muon.sumNeutralHadronEtR04   = -999;
+  muon.sumPhotonEtR04          = -999;
+  muon.sumPUPtR04              = -999;
+
+  muon.isHltMatched[0] = -999;
+  muon.isHltMatched[1] = -999;
+
+}
+
+void UFMuonElectronAnalyzer::initEle(_EleInfo& ele) {
+
+  ele.charge = -999;
+  ele.et = -999;
+  ele.eta = -999;
+  ele.phi = -999;
+
+  ele.isEB = -999;
+  ele.isEE = -999;
 
 }
 
