@@ -12,8 +12,8 @@ DiMuons = cms.EDAnalyzer('UFDiMuonsAnalyzer',
                          isGlobal    =cms.int32(0),
                          isStandAlone=cms.int32(0),
                          isTracker   =cms.int32(0),
-                         ptMin       = cms.double(20),
-                         etaMax      = cms.double(2.4),
+                         ptMin       = cms.double(-999),
+                         etaMax      = cms.double(999),
                          normChiSquareMax= cms.double(999),
 
                          # number of hits cuts
