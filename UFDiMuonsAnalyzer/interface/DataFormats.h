@@ -53,8 +53,11 @@ typedef struct {
   float trkPhi;
   
   float normChiSquare;
-  float d0;
-  float dz;
+  float d0_BM;
+  float dz_BM;
+
+  float d0_PV;
+  float dz_PV;
   
   int numPixelLayers;   //number of pixel layers with valid hits
   int numTrackerLayers; //number of tracker layers with valid hits 
