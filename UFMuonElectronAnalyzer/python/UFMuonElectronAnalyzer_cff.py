@@ -1,7 +1,12 @@
 import FWCore.ParameterSet.Config as cms
 
-##from RecoMuon.TrackingTools.MuonServiceProxy_cff import *
+## from RecoMuon.TrackingTools.MuonServiceProxy_cff import *
 from SHarper.HEEPAnalyzer.HEEPEventParameters_cfi import *
+
+## remove the et cut which generally is very high (35 or 40 GeV)
+heepEventPara.barrelCuts.minEt=cms.double(0)
+heepEventPara.endcapCuts.minEt=cms.double(0)
+
 #
 # yay! the analyzer!
 #
