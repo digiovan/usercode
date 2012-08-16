@@ -7,6 +7,9 @@ DiMuons = cms.EDAnalyzer('UFDiMuonsAnalyzer',
                          isVerbose = cms.untracked.bool(False),
                          isMonteCarlo = cms.bool(False),
                          nMuons = cms.int32(0),
+
+                         saveWeights   = cms.untracked.bool(False), 
+                         PdfWeightTags = cms.untracked.VInputTag("pdfWeights:CT10"),
                          
                          # muon kinematic cuts
                          isGlobal    =cms.int32(0),

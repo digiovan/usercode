@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Gian Piero Di Giovanni,32 4-B08,+41227674961,
 //         Created:  Thur Oct 21 10:44:13 CEST 2010
-// $Id: UFDiMuonsAnalyzer.cc,v 1.3 2012/04/18 09:36:03 digiovan Exp $
+// $Id: UFDiMuonsAnalyzer.cc,v 1.4 2012/07/05 07:28:52 digiovan Exp $
 //
 //
 
@@ -364,6 +364,15 @@ private:
   bool _isTriggerEmulated;
   double _emulatedPt;
 
+
+  // -------------------------------------------------
+  // retrieving the weights for PDF variations
+  bool _saveWeights;
+  
+  std::vector<edm::InputTag> pdfWeightTags_;
+  //std::vector<float>* weights_;
+  std::vector< std::vector<float> > weightsVector_;
+  
 };
 
 
@@ -385,6 +394,14 @@ UFDiMuonsAnalyzer::UFDiMuonsAnalyzer(const edm::ParameterSet& iConfig):
   _isMonteCarlo	= iConfig.getParameter<bool>("isMonteCarlo");
   _isTriggerEmulated   = iConfig.getUntrackedParameter<bool>("isTriggerEmulated",   false);
   _emulatedPt   = iConfig.getUntrackedParameter<double>("emulatedPt",  -999);
+
+  _saveWeights	= iConfig.getUntrackedParameter<bool>("saveWeights",true);
+ 
+  std::cout << "_saveWeights=" << _saveWeights << std::endl;
+  if (_saveWeights) {
+    pdfWeightTags_ = iConfig.getUntrackedParameter<std::vector<edm::InputTag> > ("PdfWeightTags");
+    std::cout << "pdfWeightTags_.size()=" << pdfWeightTags_.size() << std::endl;
+  }  
 
   // selection cuts
   _isGlobal               = iConfig.getParameter<int>("isGlobal");
@@ -471,6 +488,46 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
     std::cout << "\n\n A N A LI Z I N G   E V E N T = " 
 	      << _numEvents << std::endl << std::endl;
  
+
+  // ---- test for retrieving the weights ----
+  if (_saveWeights) {
+    
+    weightsVector_ . clear();
+
+    edm::Handle<std::vector<double> > weightHandle;
+    for (unsigned int i=0; i<pdfWeightTags_.size(); ++i) {
+      
+      std::vector<float> weights_;
+      weights_.clear();
+
+      iEvent.getByLabel(pdfWeightTags_[i], weightHandle);
+      if (!weightHandle.isValid()) {
+        std::cout << "UFDiMuonsAnalyzer::analyze: Error in getting  weightHandle product from Event!" << std::endl;
+        std::cout << " Did you add the producer in the python file?" << std::endl;
+        return;
+      }
+      
+      std::vector<double> weights = (*weightHandle);
+      unsigned int nmembers = weights.size();
+      
+      if (_isVerbose)
+        std::cout << "# weights produced: " << nmembers << std::endl;
+      
+      for (unsigned int iw=0; iw<nmembers; ++iw) {
+        if (_isVerbose)
+          std::cout << iw << ") weight retrieved=" << weights[iw] << std::endl;
+        
+        weights_ . push_back(weights[iw]);
+      }
+
+      weightsVector_ . push_back(weights_);
+      
+    }
+  }
+  
+  // -----------------------------------------
+  
+
 
   // -----------------------------------------
   // H L T   H A N D L E S
@@ -748,6 +805,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   if (muonsSelected.size() == 0) {
     if (_isVerbose) std::cout << "0 reco'd muons...\n";
     _outTree->Fill();
+
     return;
   }
 
@@ -1423,8 +1481,23 @@ void UFDiMuonsAnalyzer::beginJob()
 
     _outTree->Branch("genJets", &_genJetInfo, "nGenJets/I:genJetPx[10]/F:genJetPy[10]/F:genJetPz[10]/F:genJetPt[10]/F:genJetEta[10]/F:genJetPhi[10]/F:genJetM[10]/F:genJetCharge[10]/I");
 
+    
+    if (_saveWeights) {
+      
+      weightsVector_ . reserve(pdfWeightTags_.size());
+      for (unsigned int i=0; i<pdfWeightTags_.size(); ++i) {
+        //edm::LogInfo("UFDiMuonsAnalyzer") << "\t beginJob pdfWeightTag:" << pdfWeightTags_[i].instance();
+        std::cout << "UFDiMuonsAnalyzer beginJob pdfWeightTag: " << pdfWeightTags_[i].instance()
+                  << std::endl;
+        
+        char bName[200];
+        sprintf(bName, "weights_%s", pdfWeightTags_[i].instance().c_str());
+        _outTree->Branch(bName, &(weightsVector_[i]) );
+      }
+    }
+    
   }
-
+  
 }
 
 
